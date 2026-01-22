@@ -14,14 +14,21 @@
             min-height: 100vh;
             line-height: 1.6;
         }
-        header {
+        .home-centered {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .page-header {
             padding: 2rem;
             text-align: center;
-            border-bottom: 1px solid #eee;
         }
-        header h1 { font-size: 1.25rem; font-weight: 500; letter-spacing: 0.02em; }
-        header a { color: #111; text-decoration: none; }
-        nav { margin-top: 1rem; }
+        h1 { font-size: 1.5rem; font-weight: 500; letter-spacing: 0.02em; }
+        h1 a { color: #111; text-decoration: none; }
+        .tagline { font-size: 0.85rem; color: #666; margin-top: 0.5rem; font-style: italic; }
+        nav { margin-top: 2rem; }
         nav a {
             color: #111;
             text-decoration: none;
@@ -37,14 +44,6 @@
             margin: 0 auto;
             padding: 3rem 1.5rem;
         }
-        .home-main {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: calc(100vh - 200px);
-            text-align: center;
-        }
-        .tagline { font-size: 0.85rem; color: #666; margin-top: 0.5rem; font-style: italic; }
         article h1 { font-size: 1.5rem; font-weight: 500; margin-bottom: 0.5rem; }
         article .date { font-size: 0.85rem; color: #666; margin-bottom: 2rem; }
         article p { margin-bottom: 1rem; }
@@ -57,15 +56,6 @@
     </style>
 </head>
 <body>
-    <header>
-        <h1><a href="/">Patrick Glover, MD</a></h1>
-        <nav>
-            <a href="/">Home</a>
-            <a href="/blog/">Blog</a>
-            <a href="/research/">Research</a>
-            <a href="/cv/">CV</a>
-        </nav>
-    </header>
     {{ content }}
 </body>
 </html>
