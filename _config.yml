@@ -1,0 +1,8 @@
+title: Patrick Glover, MD
+description: fighting entropy locally
+url: https://patrickglover.io
+permalink: /blog/:title/
+markdown: kramdown
+
+plugins:
+  - jekyll-seo-tag
