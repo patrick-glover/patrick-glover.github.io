@@ -1,7 +1,7 @@
 title: Patrick Glover, MD
 description: fighting entropy locally
 url: https://patrickglover.io
-permalink: /blog/:title/
+permalink: /writing/:title/
 markdown: kramdown
 
 plugins:

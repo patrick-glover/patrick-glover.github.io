@@ -1,9 +1,10 @@
 ---
 layout: default
-title: Blog
+title: Writing
+permalink: /writing/
 ---
 <main>
-    <h1>Blog</h1>
+    <h1>Writing</h1>
     <ul class="post-list">
         {% for post in site.posts %}
         <li>
