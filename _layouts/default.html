@@ -7,6 +7,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◐</text></svg>">
     <link rel="prefetch" href="/writing/">
     <link rel="prefetch" href="/projects/">
+    <link rel="prefetch" href="/research/">
     <script>
         (function() {
             const saved = localStorage.getItem('theme');
@@ -130,6 +131,15 @@
         .theme-toggle .icon-moon { display: block; }
         [data-theme="dark"] .theme-toggle .icon-sun { display: block; }
         [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+
+        /* Research */
+        .research-interests h2 { font-size: 1.1rem; font-weight: 500; margin-top: 1.5rem; }
+        .research-interests p { font-size: 0.9rem; color: var(--text-muted); margin-top: 0.25rem; }
+        .publications h2 { font-size: 1.1rem; font-weight: 500; margin-top: 2rem; margin-bottom: 1rem; }
+        .pub-entry { margin-bottom: 0.75rem; font-size: 0.85rem; line-height: 1.5; }
+        .pub-title { font-weight: 500; }
+        .pub-authors, .pub-venue { color: var(--text-muted); }
+        .pub-entry a { color: var(--text); font-size: 0.8rem; margin-left: 0.25rem; }
 
         /* Project cards */
         .project-grid {
