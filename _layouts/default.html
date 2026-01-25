@@ -8,7 +8,7 @@
     <link rel="prefetch" href="/writing/">
     <link rel="prefetch" href="/projects/">
     <link rel="prefetch" href="/research/">
-    <link rel="prefetch" href="/contact/">
+    <link rel="prefetch" href="/about/">
     <script>
         (function() {
             const saved = localStorage.getItem('theme');
@@ -225,8 +225,7 @@
             <a href="/writing/"{% if page.title == "Writing" %} style="border-bottom-color: var(--text)"{% endif %}>Writing</a>
             <a href="/projects/"{% if page.title == "Projects" %} style="border-bottom-color: var(--text)"{% endif %}>Projects</a>
             <a href="/research/"{% if page.title == "Research" %} style="border-bottom-color: var(--text)"{% endif %}>Research</a>
-            <a href="/cv/"{% if page.title == "CV" %} style="border-bottom-color: var(--text)"{% endif %}>CV</a>
-            <a href="/contact/"{% if page.title == "Contact" %} style="border-bottom-color: var(--text)"{% endif %}>Contact</a>
+            <a href="/about/"{% if page.title == "About" %} style="border-bottom-color: var(--text)"{% endif %}>About</a>
         </nav>
     </header>
     {% endif %}
