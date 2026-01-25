@@ -1,0 +1,97 @@
+#!/bin/bash
+
+# Configuration
+OBSIDIAN_POSTS="$HOME/Documents/remote1/blog"
+JEKYLL_SITE="$HOME/Documents/Projects/patrick-glover.github.io"
+POSTS_DIR="$JEKYLL_SITE/_posts"
+
+usage() {
+    echo "Usage: ./publish <filename.md> [--date YYYY-MM-DD]"
+    echo ""
+    echo "Publishes a post from your Obsidian vault to Jekyll."
+    echo "Source: $OBSIDIAN_POSTS"
+    echo ""
+    echo "Options:"
+    echo "  --date    Publish date (defaults to today)"
+    echo "  --list    List available posts in Obsidian folder"
+    exit 1
+}
+
+list_posts() {
+    echo "Available posts in $OBSIDIAN_POSTS:"
+    echo ""
+    for f in "$OBSIDIAN_POSTS"/*.md; do
+        [ -f "$f" ] && echo "  $(basename "$f")"
+    done
+    exit 0
+}
+
+# Parse arguments
+DATE=$(date +%Y-%m-%d)
+FILENAME=""
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --date) DATE="$2"; shift 2 ;;
+        --list) list_posts ;;
+        --help|-h) usage ;;
+        *) FILENAME="${FILENAME:+$FILENAME }$1"; shift ;;
+    esac
+done
+
+[ -z "$FILENAME" ] && usage
+
+# Resolve source file
+SOURCE="$OBSIDIAN_POSTS/$FILENAME"
+if [ ! -f "$SOURCE" ]; then
+    echo "Error: $SOURCE not found"
+    echo "Run './publish --list' to see available posts."
+    exit 1
+fi
+
+# Generate title from filename (strip .md, replace hyphens/underscores with spaces, title case)
+BASENAME=$(basename "$FILENAME" .md)
+TITLE=$(echo "$BASENAME" | sed 's/[-_]/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) substr($i,2)}1')
+
+# Generate Jekyll filename
+SLUG=$(echo "$BASENAME" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//;s/-$//')
+DEST="$POSTS_DIR/${DATE}-${SLUG}.md"
+
+# Check if post already exists
+if [ -f "$DEST" ]; then
+    read -p "Post already exists at $DEST. Overwrite? [y/N] " confirm
+    [[ "$confirm" != [yY] ]] && exit 0
+fi
+
+# Check if source already has front matter
+if head -1 "$SOURCE" | grep -q '^---'; then
+    # Has front matter — strip blank lines within it and use as-is
+    awk '
+        BEGIN { in_fm=0; fm_done=0; count=0 }
+        /^---/ && !fm_done { count++; if(count==1){in_fm=1; print; next} else {fm_done=1; print; next} }
+        in_fm && /^[[:space:]]*$/ { next }
+        { print }
+    ' "$SOURCE" > "$DEST"
+    # Extract title from existing front matter for commit message
+    TITLE=$(grep '^title:' "$DEST" | head -1 | sed 's/^title:[[:space:]]*//; s/^"//; s/"$//')
+else
+    # No front matter — generate it
+    {
+        echo "---"
+        echo "layout: post"
+        echo "title: \"$TITLE\""
+        echo "date: $DATE"
+        echo "---"
+        echo ""
+        cat "$SOURCE"
+    } > "$DEST"
+fi
+
+echo "Created: $DEST"
+
+# Git commit and push
+cd "$JEKYLL_SITE" || exit 1
+git add "$DEST"
+git commit -m "Publish: $TITLE" && git push origin main
+
+echo "Published: https://patrickglover.io/writing/$SLUG/"
