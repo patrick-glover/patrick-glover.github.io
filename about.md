@@ -7,8 +7,9 @@ permalink: /about/
     <h1>About</h1>
 
     <p>Maker of things. Now a neurology PGY2 @ Stanford.</p>
-
-    <h2>Contact</h2>
+    <br>
+    <br>
+    <h3>Contact</h3>
 
     <p>[firstname].[lastname]@stanford.edu</p>
 
