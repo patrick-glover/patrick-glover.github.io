@@ -5,6 +5,7 @@ permalink: /writing/
 ---
 <main>
     <h1>Writing</h1>
+    {% if site.posts.size > 0 %}
     <ul class="post-list">
         {% for post in site.posts %}
         <li>
@@ -13,4 +14,7 @@ permalink: /writing/
         </li>
         {% endfor %}
     </ul>
+    {% else %}
+    <p style="color: var(--text-muted);">Coming soon.</p>
+    {% endif %}
 </main>

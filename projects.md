@@ -5,41 +5,24 @@ permalink: /projects/
 ---
 <main>
     <h1>Projects</h1>
-
+    {% if site.data.projects.size > 0 %}
     <div class="project-grid">
+        {% for project in site.data.projects %}
         <div class="project-card">
             <h3>
-                <a href="#">Project One</a>
-                <span class="project-status status-active">Active</span>
+                <a href="{{ project.url }}">{{ project.name }}</a>
+                <span class="project-status status-{{ project.status }}">{{ project.status | capitalize }}</span>
             </h3>
-            <p>A brief description of what this project does and why it matters.</p>
+            <p>{{ project.description }}</p>
             <div class="tags">
-                <span class="tag">Python</span>
-                <span class="tag">ML</span>
+                {% for tag in project.tags %}
+                <span class="tag">{{ tag }}</span>
+                {% endfor %}
             </div>
         </div>
-
-        <div class="project-card">
-            <h3>
-                <a href="#">Project Two</a>
-                <span class="project-status status-active">Active</span>
-            </h3>
-            <p>Another project description goes here. Keep it concise but informative.</p>
-            <div class="tags">
-                <span class="tag">JavaScript</span>
-                <span class="tag">Web</span>
-            </div>
-        </div>
-
-        <div class="project-card">
-            <h3>
-                <a href="#">Project Three</a>
-                <span class="project-status status-idea">Idea</span>
-            </h3>
-            <p>Something you're thinking about building or exploring in the future.</p>
-            <div class="tags">
-                <span class="tag">Research</span>
-            </div>
-        </div>
+        {% endfor %}
     </div>
+    {% else %}
+    <p style="color: var(--text-muted);">Coming soon.</p>
+    {% endif %}
 </main>

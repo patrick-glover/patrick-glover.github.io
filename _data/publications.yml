@@ -1,17 +1,1 @@
-- title: "Example publication title"
-  authors: ["Glover P", "Coauthor A", "Coauthor B"]
-  year: 2024
-  venue: "Journal Name"
-  doi: "10.1234/example"
-  pdf: ""
-  preprint: ""
-  area: "area-one"
-
-- title: "Another example publication"
-  authors: ["Glover P", "Coauthor C"]
-  year: 2023
-  venue: "Conference Name"
-  doi: "10.1234/example2"
-  pdf: ""
-  preprint: ""
-  area: "area-two"
+# Add publications here - see WORKFLOW.md for format

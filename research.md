@@ -5,17 +5,8 @@ permalink: /research/
 ---
 <main>
     <h1>Research</h1>
-
-    <section class="research-interests">
-        <h2 id="area-one">Area One</h2>
-        <p>Brief description of this research area.</p>
-
-        <h2 id="area-two">Area Two</h2>
-        <p>Brief description of this research area.</p>
-    </section>
-
+    {% if site.data.publications.size > 0 %}
     <section class="publications">
-        <h2>Publications</h2>
         {% for pub in site.data.publications %}
         <div class="pub-entry">
             <span class="pub-title">{{ pub.title }}.</span>
@@ -27,4 +18,7 @@ permalink: /research/
         </div>
         {% endfor %}
     </section>
+    {% else %}
+    <p style="color: var(--text-muted);">Coming soon.</p>
+    {% endif %}
 </main>
