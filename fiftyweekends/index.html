@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fifty Weekends</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#fbf6f7">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #fbf6f7;
+    --ink: #46383f;
+    --soft: #9c8a92;
+    --rose: #d96a85;
+    --rose-pale: #f6e3e9;
+    --gold: #dda43c;
+    --gold-pale: #f7ead2;
+    --line: #ecdfe4;
+    --card: #ffffff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Nunito', -apple-system, sans-serif;
+    line-height: 1.55;
+    padding: clamp(1.2rem, 5vw, 2.5rem) 1.2rem 4rem;
+  }
+  main { max-width: 24rem; margin: 0 auto; }
+
+  .kicker {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--rose);
+    text-align: center;
+  }
+  h1 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 400;
+    text-align: center;
+    margin-top: 1.4rem;
+    font-size: 1.05rem;
+    color: var(--soft);
+  }
+  h1 .big {
+    display: block;
+    font-size: clamp(4.5rem, 26vw, 6.5rem);
+    font-weight: 600;
+    line-height: 1;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    margin-bottom: 0.4rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .lede {
+    text-align: center;
+    margin: 1.3rem auto 0;
+    font-size: 0.95rem;
+    color: var(--ink);
+    max-width: 21rem;
+  }
+  .lede em { font-family: 'Fraunces', Georgia, serif; font-style: italic; }
+
+  section { margin-top: 3rem; }
+  h2 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    font-size: 1.3rem;
+    margin-bottom: 0.4rem;
+  }
+  .sub { font-size: 0.85rem; color: var(--soft); margin-bottom: 1.2rem; }
+
+  /* ---- the heart grid ---- */
+  .hearts {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 0.45rem;
+  }
+  .hearts button {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    line-height: 0;
+    border-radius: 8px;
+  }
+  .hearts button:focus-visible { outline: 2px solid var(--rose); outline-offset: 2px; }
+  .hearts svg { width: 100%; height: auto; display: block; transition: transform 0.15s; }
+  .hearts button:active svg { transform: scale(1.25); }
+  .hearts .passed svg { opacity: 0.28; }
+  .hearts .sel svg { transform: scale(1.22); }
+  .hearts .next svg .hp { animation: pulse 2.6s ease-in-out infinite; transform-origin: center; }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    12% { transform: scale(1.15); }
+    24% { transform: scale(1); }
+  }
+
+  .detail {
+    margin-top: 1rem;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 0.85rem 1rem;
+    font-size: 0.9rem;
+    min-height: 3.4rem;
+    box-shadow: 0 2px 10px rgba(160, 110, 130, 0.07);
+  }
+  .detail .when { font-weight: 700; }
+  .detail .what { color: var(--soft); }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1rem;
+    margin-top: 1rem;
+    font-size: 0.75rem;
+    color: var(--soft);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+  .legend svg { width: 13px; height: 13px; }
+
+  /* ---- milestones ---- */
+  .miles { list-style: none; }
+  .miles li {
+    display: flex;
+    gap: 0.9rem;
+    padding: 0.8rem 0;
+    border-bottom: 1px dashed var(--line);
+    align-items: baseline;
+  }
+  .miles li:last-child { border-bottom: none; }
+  .miles .date {
+    flex: 0 0 4.6rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--rose);
+  }
+  .miles .what { font-size: 0.92rem; }
+  .miles .in { display: block; font-size: 0.78rem; color: var(--soft); }
+  .miles li.past { opacity: 0.45; }
+  .miles li.past .what > span:first-child { text-decoration: line-through; }
+  .miles li.final .what { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-size: 1.05rem; }
+
+  /* ---- once more list ---- */
+  .once { list-style: none; }
+  .once li {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.55rem 0;
+    font-size: 0.92rem;
+  }
+  .once .tag {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .once li.past { opacity: 0.45; }
+  .once li.past .name { text-decoration: line-through; }
+  .once li.past .tag::after { content: " ✓ never again"; color: var(--rose); }
+
+  /* ---- progress ---- */
+  .prog-track {
+    height: 8px;
+    background: #f1e5e9;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .prog-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--rose), var(--gold));
+    border-radius: 4px;
+  }
+  .prog-note {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--soft);
+    margin-top: 0.5rem;
+  }
+
+  footer {
+    text-align: center;
+    margin-top: 3.5rem;
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: 1rem;
+    color: var(--soft);
+  }
+  footer .sign { color: var(--rose); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hearts .next svg .hp { animation: none; }
+    .hearts svg, .hearts button:active svg { transition: none; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <p class="kicker">for Ang &#129293;</p>
+  <h1><span class="big" id="n-weekends">50</span>weekends left, that's all</h1>
+  <p class="lede"><span id="n-days">354</span> days sounds impossible. But it isn't days — it's <em id="n-apart">47</em> Saturdays apart, <em id="n-golden">19</em> of them already free for both of us, and two trips already booked. <em>We can count that low.</em></p>
+
+  <section>
+    <h2>Every weekend, one heart</h2>
+    <p class="sub">Tap a heart to see whose weekend it is.</p>
+    <div class="hearts" id="hearts"></div>
+    <div class="detail" id="detail">
+      <span class="when">Tap any heart</span><br>
+      <span class="what">— the pulsing one is the next time we're together.</span>
+    </div>
+    <div class="legend" id="legend"></div>
+  </section>
+
+  <section>
+    <h2>The good stuff ahead</h2>
+    <p class="sub">Already on the calendar. Real things, with dates.</p>
+    <ul class="miles" id="miles"></ul>
+  </section>
+
+  <section>
+    <h2>Once more, then never again</h2>
+    <p class="sub">Each of these happens one last time apart — then never again.</p>
+    <ul class="once" id="once"></ul>
+  </section>
+
+  <section>
+    <h2>How far we've come</h2>
+    <div class="prog-track"><div class="prog-fill" id="prog"></div></div>
+    <p class="prog-note"><span>Jul 1, 2026</span><span id="pct"></span><span>Jul 1, 2027</span></p>
+  </section>
+
+  <footer>
+    <p>then no more counting.<br><span class="sign">— P &#10084;&#65039;</span></p>
+  </footer>
+</main>
+
+<script>
+(function () {
+  var END = new Date(2027, 6, 1);
+
+  // one entry per remaining weekend (Saturday date), from both of our schedules.
+  // s: tog = together, gold = both free, maybe = wards weeks (unmarked), work = one of us working
+  var W = [
+    ['2026-07-18','work',"Ang's on night float 🌙"],
+    ['2026-07-25','work',"Ang's on night float 🌙 — but vacation starts Monday"],
+    ['2026-08-01','tog',"vacation — two whole weeks, together ✈️"],
+    ['2026-08-08','tog',"vacation, still together ✈️"],
+    ['2026-08-15','maybe',"Ang's on FM wards"],
+    ['2026-08-22','maybe',"Patrick requested it off — visit? 💌"],
+    ['2026-08-29','maybe',"Ang's on inpatient support"],
+    ['2026-09-05','work',"Patrick's in the ICU all weekend"],
+    ['2026-09-12','gold',"both free 💛"],
+    ['2026-09-19','work',"Patrick's in the ICU Saturday"],
+    ['2026-09-26','work',"Patrick's in the ICU Saturday"],
+    ['2026-10-03','gold',"both free 💛"],
+    ['2026-10-10','gold',"both free 💛"],
+    ['2026-10-17','gold',"both free 💛"],
+    ['2026-10-24','gold',"both free 💛"],
+    ['2026-10-31','work',"Patrick's at LPCH 🎃"],
+    ['2026-11-07','gold',"both free 💛"],
+    ['2026-11-14','work',"Patrick's at LPCH"],
+    ['2026-11-21','gold',"both free 💛"],
+    ['2026-11-28','work',"the last Thanksgiving apart — both working 🦃"],
+    ['2026-12-05','work',"Patrick on consult Fri + Sun"],
+    ['2026-12-12','work',"Patrick on consult Fri + Sun"],
+    ['2026-12-19','gold',"both free — and Christmas is coming 🎄"],
+    ['2026-12-26','gold',"Christmas weekend — we both look free 🎄"],
+    ['2027-01-02','work',"Ang has Saturday call; Patrick on stroke"],
+    ['2027-01-09','work',"Ang has Saturday call; Patrick on stroke"],
+    ['2027-01-16','maybe',"Patrick's on stroke — weekends TBD"],
+    ['2027-01-23','maybe',"Patrick's on stroke — weekends TBD"],
+    ['2027-01-30','maybe',"Ang's on FM wards"],
+    ['2027-02-06','maybe',"Ang's on FM wards"],
+    ['2027-02-13','work',"swing shifts + inpatient — Valentine's, once more apart 💌"],
+    ['2027-02-20','work',"one hard weekend… then the airport ✈️"],
+    ['2027-02-27','tog',"vacation, together — 67% done when we land 🧡"],
+    ['2027-03-06','work',"Patrick on consult Fri + Sun"],
+    ['2027-03-13','work',"Patrick on swing; Ang has VA call"],
+    ['2027-03-20','work',"Patrick on swing; Ang has VA call"],
+    ['2027-03-27','work',"Ang has VA call Sunday"],
+    ['2027-04-03','work',"Ang has VA call Sunday"],
+    ['2027-04-10','gold',"both free 💛 — the soft stretch begins"],
+    ['2027-04-17','gold',"both free 💛"],
+    ['2027-04-24','gold',"both free 💛"],
+    ['2027-05-01','work',"Patrick's at LPCH"],
+    ['2027-05-08','gold',"both free 💛"],
+    ['2027-05-15','work',"Patrick's at LPCH"],
+    ['2027-05-22','gold',"both free 💛"],
+    ['2027-05-29','gold',"Memorial Day — three days, both on elective 🌸"],
+    ['2027-06-05','gold',"both free 💛"],
+    ['2027-06-12','gold',"both free 💛"],
+    ['2027-06-19','gold',"both free 💛"],
+    ['2027-06-26','gold',"the very last weekend apart 🕊️"]
+  ];
+
+  var MILES = [
+    ['2026-07-27', 'Two whole weeks together — our vacations line up exactly', 'Jul 27'],
+    ['2026-12-25', 'Christmas — and we both look free 🎄', 'Dec 25'],
+    ['2027-02-22', 'One more week away together', 'Feb 22'],
+    ['2027-03-01', 'Two-thirds done the day we land', 'Mar 1'],
+    ['2027-05-29', 'Memorial Day, both free, three days', 'May 29'],
+    ['2027-07-01', 'Home. No more counting.', 'Jul 1']
+  ];
+
+  var ONCE = [
+    ['2026-11-26', '🦃 Thanksgiving apart'],
+    ['2026-12-31', '🎆 New Year’s over FaceTime'],
+    ['2027-02-14', '💌 Valentine’s apart']
+  ];
+
+  var COLORS = {
+    tog:   { fill: '#d96a85', stroke: 'none', dash: '' },
+    gold:  { fill: '#dda43c', stroke: 'none', dash: '' },
+    maybe: { fill: '#f6e3e9', stroke: '#d3a4b5', dash: '2.5 2' },
+    work:  { fill: '#f3edef', stroke: '#c9bac2', dash: '' }
+  };
+  var LABELS = { tog: 'together', gold: 'both free', maybe: 'maybe', work: 'one of us working' };
+  var HEART = 'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z';
+
+  function heartSVG(state) {
+    var c = COLORS[state];
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    var p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    p.setAttribute('d', HEART);
+    p.setAttribute('class', 'hp');
+    p.setAttribute('fill', c.fill);
+    if (c.stroke !== 'none') {
+      p.setAttribute('stroke', c.stroke);
+      p.setAttribute('stroke-width', '1.4');
+      if (c.dash) p.setAttribute('stroke-dasharray', c.dash);
+    }
+    svg.appendChild(p);
+    return svg;
+  }
+
+  function parse(s) { var a = s.split('-'); return new Date(+a[0], a[1]-1, +a[2]); }
+  function fmt(d) {
+    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+
+  var today = new Date(); today.setHours(0,0,0,0);
+  var grid = document.getElementById('hearts');
+  var detail = document.getElementById('detail');
+  var left = 0, apart = 0, golden = 0, nextTog = null;
+
+  W.forEach(function (w) {
+    var d = parse(w[0]);
+    var sun = new Date(d); sun.setDate(sun.getDate() + 1);
+    var passed = sun < today;
+    if (!passed) {
+      left++;
+      if (w[1] !== 'tog') apart++;
+      if (w[1] === 'gold') golden++;
+      if (w[1] === 'tog' && !nextTog) nextTog = w;
+    }
+    var b = document.createElement('button');
+    b.className = passed ? 'passed' : '';
+    b.setAttribute('aria-label', fmt(d) + ' — ' + w[2]);
+    b.appendChild(heartSVG(w[1]));
+    b.addEventListener('click', function () {
+      var old = grid.querySelector('.sel');
+      if (old) old.classList.remove('sel');
+      b.classList.add('sel');
+      detail.innerHTML = '<span class="when">' + fmt(d) + (passed ? ' · already behind us ✓' : '') +
+        '</span><br><span class="what">' + w[2] + '</span>';
+    });
+    grid.appendChild(b);
+    w.push(b);
+  });
+  if (nextTog) nextTog[3].classList.add('next');
+
+  document.getElementById('n-weekends').textContent = left;
+  document.getElementById('n-days').textContent = Math.max(0, Math.ceil((END - today) / 86400000));
+  document.getElementById('n-apart').textContent = apart;
+  document.getElementById('n-golden').textContent = golden;
+
+  var legend = document.getElementById('legend');
+  ['tog','gold','maybe','work'].forEach(function (s) {
+    var span = document.createElement('span');
+    span.appendChild(heartSVG(s));
+    span.appendChild(document.createTextNode(LABELS[s]));
+    legend.appendChild(span);
+  });
+
+  var miles = document.getElementById('miles');
+  MILES.forEach(function (m, i) {
+    var d = parse(m[0]);
+    var days = Math.ceil((d - today) / 86400000);
+    var li = document.createElement('li');
+    if (days < 0) li.className = 'past';
+    if (i === MILES.length - 1) li.className += ' final';
+    var when = days < 0 ? 'done ✓' : days === 0 ? 'today!! 🎉' : 'in ' + days + ' day' + (days === 1 ? '' : 's');
+    li.innerHTML = '<span class="date">' + m[2] + '</span><span class="what"><span>' +
+      m[1] + '</span><span class="in">' + when + '</span></span>';
+    miles.appendChild(li);
+  });
+
+  var once = document.getElementById('once');
+  ONCE.forEach(function (o) {
+    var d = parse(o[0]);
+    var li = document.createElement('li');
+    if (d < today) li.className = 'past';
+    li.innerHTML = '<span class="name">' + o[1] + '</span><span class="tag">once more</span>';
+    once.appendChild(li);
+  });
+
+  var START = new Date(2026, 6, 1);
+  var pct = Math.min(100, Math.max(0, (today - START) / (END - START) * 100));
+  document.getElementById('prog').style.width = pct + '%';
+  document.getElementById('pct').textContent = pct.toFixed(1) + '% there';
+})();
+</script>
+</body>
+</html>
