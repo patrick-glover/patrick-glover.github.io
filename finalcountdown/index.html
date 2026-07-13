@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arrival: July 1, 2027</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0e1013">
+<style>
+  :root {
+    --board: #0e1013;      /* board housing */
+    --tile: #1a1e23;       /* flap face */
+    --tile-edge: #262b31;  /* flap bevel */
+    --flap-text: #ece9e2;  /* painted digits */
+    --amber: #f2b23e;      /* Solari status amber */
+    --dim: #6f7680;        /* stenciled labels */
+    --rule: #23272d;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+
+  body {
+    background: var(--board);
+    color: var(--flap-text);
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  main { width: 100%; max-width: 26rem; }
+
+  /* ---- board header row ---- */
+  .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    color: var(--dim);
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 0.7rem;
+  }
+  .head .live { color: var(--amber); }
+  .head .live::before {
+    content: "";
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--amber);
+    margin-right: 0.45em;
+    vertical-align: 1px;
+    animation: blink 2s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0.25; } }
+
+  /* ---- split-flap tiles ---- */
+  .tiles {
+    display: flex;
+    justify-content: center;
+    gap: clamp(0.3rem, 1.8vw, 0.5rem);
+    perspective: 600px;
+  }
+  .tile {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(180deg, var(--tile-edge) 0%, var(--tile) 12%, var(--tile) 88%, #14171b 100%);
+    border-radius: clamp(4px, 1vw, 7px);
+    box-shadow: 0 2px 0 #000, inset 0 1px 0 rgba(255,255,255,0.06);
+    font-variant-numeric: tabular-nums;
+    transform-style: preserve-3d;
+  }
+  /* the horizontal seam every split-flap has */
+  .tile::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; top: 50%;
+    height: 2px;
+    margin-top: -1px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.75), rgba(0,0,0,0.35));
+    pointer-events: none;
+  }
+  .tile.flip { animation: flap 200ms ease-in-out; }
+  @keyframes flap {
+    0%   { transform: rotateX(0); }
+    50%  { transform: rotateX(-88deg); }
+    100% { transform: rotateX(0); }
+  }
+
+  .days .tile {
+    width: clamp(4.4rem, 22vw, 6rem);
+    height: clamp(6rem, 30vw, 8.2rem);
+    font-size: clamp(3.4rem, 17vw, 4.8rem);
+    font-weight: 700;
+  }
+  .days { margin-top: clamp(2rem, 8vw, 3rem); }
+
+  .unit {
+    text-align: center;
+    font-size: 0.7rem;
+    letter-spacing: 0.35em;
+    text-indent: 0.35em; /* re-center around tracking */
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-top: 0.9rem;
+  }
+
+  .hms {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: clamp(0.6rem, 3vw, 1rem);
+    margin-top: clamp(1.6rem, 6vw, 2.2rem);
+  }
+  .hms .group .tiles { gap: 0.25rem; }
+  .hms .tile {
+    width: clamp(1.7rem, 8vw, 2.1rem);
+    height: clamp(2.5rem, 12vw, 3.1rem);
+    font-size: clamp(1.3rem, 6.5vw, 1.7rem);
+    font-weight: 600;
+  }
+  .hms .unit { margin-top: 0.55rem; letter-spacing: 0.25em; text-indent: 0.25em; }
+  .hms .sep {
+    color: var(--dim);
+    font-size: clamp(1.1rem, 5vw, 1.4rem);
+    line-height: clamp(2.5rem, 12vw, 3.1rem);
+  }
+
+  /* ---- arrivals row ---- */
+  .arrival {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-top: clamp(2.2rem, 9vw, 3.2rem);
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--rule);
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .arrival .field .lbl {
+    display: block;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    color: var(--dim);
+    margin-bottom: 0.35rem;
+  }
+  .arrival .status { color: var(--amber); }
+
+  /* ---- route line ---- */
+  .route { margin-top: clamp(1.8rem, 7vw, 2.4rem); }
+  .route .track {
+    position: relative;
+    height: 2px;
+    background: var(--rule);
+  }
+  .route .flown {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: var(--amber);
+    transition: width 1s linear;
+  }
+  .route .plane {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -54%) rotate(45deg);
+    font-size: 1rem;
+    color: var(--amber);
+    transition: left 1s linear;
+    line-height: 1;
+  }
+  .route .ends {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-top: 0.7rem;
+  }
+  .route .pct { color: var(--flap-text); }
+
+  /* ---- arrived state ---- */
+  .arrived-msg {
+    text-align: center;
+    margin-top: 3rem;
+  }
+  .arrived-msg .big {
+    font-size: clamp(2.4rem, 13vw, 3.6rem);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--amber);
+  }
+  .arrived-msg p {
+    margin-top: 1.2rem;
+    color: var(--flap-text);
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .hidden { display: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tile.flip { animation: none; }
+    .head .live::before { animation: none; }
+    .route .flown, .route .plane { transition: none; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="head">
+    <span>Arrivals · Final year</span>
+    <span class="live">Now boarding</span>
+  </div>
+
+  <div id="counting">
+    <div class="days">
+      <div class="tiles" id="days-tiles" role="timer" aria-label="days remaining"></div>
+      <div class="unit">Days</div>
+    </div>
+
+    <div class="hms" aria-hidden="true">
+      <div class="group">
+        <div class="tiles" id="h-tiles"></div>
+        <div class="unit">Hrs</div>
+      </div>
+      <div class="sep">:</div>
+      <div class="group">
+        <div class="tiles" id="m-tiles"></div>
+        <div class="unit">Min</div>
+      </div>
+      <div class="sep">:</div>
+      <div class="group">
+        <div class="tiles" id="s-tiles"></div>
+        <div class="unit">Sec</div>
+      </div>
+    </div>
+
+    <div class="arrival">
+      <span class="field"><span class="lbl">Flight</span>PG · 2027</span>
+      <span class="field"><span class="lbl">Arriving</span>Jul 01 2027</span>
+      <span class="field"><span class="lbl">Status</span><span class="status">On time</span></span>
+    </div>
+
+    <div class="route">
+      <div class="track">
+        <div class="flown" id="flown"></div>
+        <div class="plane" id="plane">&#9992;</div>
+      </div>
+      <div class="ends">
+        <span>Jul '26</span>
+        <span class="pct"><span id="pct">0</span>% flown</span>
+        <span>Jul '27</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="arrived" class="arrived-msg hidden">
+    <div class="big">ARRIVED</div>
+    <p>No more countdowns.</p>
+  </div>
+</main>
+
+<script>
+  var TARGET = new Date(2027, 6, 1, 0, 0, 0);      // July 1, 2027, local midnight
+  var YEAR_START = new Date(2026, 6, 1, 0, 0, 0);  // the final year began July 1, 2026
+  var REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function tilesFor(id, count) {
+    var box = document.getElementById(id);
+    while (box.children.length < count) {
+      var t = document.createElement('div');
+      t.className = 'tile';
+      t.textContent = '0';
+      box.appendChild(t);
+    }
+    while (box.children.length > count) box.removeChild(box.firstChild);
+    return box.children;
+  }
+
+  function setTiles(id, str) {
+    var tiles = tilesFor(id, str.length);
+    for (var i = 0; i < str.length; i++) {
+      (function (tile, ch) {
+        if (tile.textContent === ch) return;
+        if (REDUCED) { tile.textContent = ch; return; }
+        tile.classList.remove('flip');
+        void tile.offsetWidth; // restart animation
+        tile.classList.add('flip');
+        setTimeout(function () { tile.textContent = ch; }, 100); // swap at the fold
+      })(tiles[i], str[i]);
+    }
+  }
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function tick() {
+    var now = new Date();
+    var left = TARGET - now;
+
+    if (left <= 0) {
+      document.getElementById('counting').classList.add('hidden');
+      document.getElementById('arrived').classList.remove('hidden');
+      document.querySelector('.head .live').textContent = 'Landed';
+      return;
+    }
+
+    setTiles('days-tiles', String(Math.floor(left / 86400000)));
+    setTiles('h-tiles', pad(Math.floor(left / 3600000) % 24));
+    setTiles('m-tiles', pad(Math.floor(left / 60000) % 60));
+    setTiles('s-tiles', pad(Math.floor(left / 1000) % 60));
+
+    var pct = Math.min(100, Math.max(0, (now - YEAR_START) / (TARGET - YEAR_START) * 100));
+    document.getElementById('flown').style.width = pct + '%';
+    document.getElementById('plane').style.left = pct + '%';
+    document.getElementById('pct').textContent = pct.toFixed(1);
+
+    setTimeout(tick, 1000 - now.getMilliseconds());
+  }
+  tick();
+</script>
+</body>
+</html>
