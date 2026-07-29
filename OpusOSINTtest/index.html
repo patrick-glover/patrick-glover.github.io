@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IMG_0762 — Geolocation Dossier</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#f6f4f0">
+<meta name="description" content="Identifying an unlabelled mountain from a single airliner window photograph using EXIF, terrain morphology, photogrammetry and solar geometry.">
+<link rel="stylesheet" href="assets/dossier.css">
+</head>
+<body>
+
+<div class="wrap">
+<header>
+  <div class="kicker">Geolocation Dossier &#183; IMG_0762.HEIC &#183; No GPS in EXIF</div>
+  <h1>Which mountain is<br>that? <em>Resolved.</em></h1>
+  <p class="sub">A single frame shot from a northbound regional jet over the upper Sacramento Valley,
+  stripped of location metadata. Identified from sensor data, terrain morphology, solar geometry
+  and flight timing.</p>
+</header>
+
+<div class="verdict">
+  <div class="q">Subject</div>
+  <div class="a">Lassen Peak, California<span class="conf">HIGH CONFIDENCE</span></div>
+  <p>10,457 ft (3,187 m) dacite plug dome &#183; Lassen Volcanic National Park &#183; 40.4882&#176;N 121.5049&#176;W.
+  Photographed from roughly <b>29 nm</b> to the west-southwest, looking <b>067&#176; true</b>, at 13:31:24 PDT from <b>seat 20C</b> of DL4125.
+  The pale dome cluster left of the summit is <b>Chaos Crags</b>; the bright fan below it is the
+  <b>Chaos Jumbles</b> rockfall-avalanche deposit.</p>
+</div>
+
+<h2><span>01</span> The frame, de-rotated</h2>
+<p>The phone was held rolled almost 90&#176;, so the raw file reads as a portrait image with a
+near-vertical horizon. Rotating it 90&#176; clockwise recovers the actual view: a snow-streaked
+volcanic summit at the western end of a rugged highland, with a dense clearcut checkerboard
+in the near field and a flat interior basin beyond the range.</p>
+<figure class="fw">
+  <img src="assets/img_overview.jpg" alt="De-rotated view from the aircraft window">
+  <figcaption>Roll-corrected frame. Horizon at y&#8776;430&#8202;/&#8202;2000; summit at y&#8776;710. Wing enters
+  from the left with the tip toward frame top &#8212; the signature of a starboard-side seat looking east. The curved cabin-window frame vignettes the lower right.</figcaption>
+</figure>
+
+<h2><span>02</span> Terrain signature</h2>
+<div class="grid2">
+  <figure>
+    <img src="assets/img_massif.jpg" alt="The volcanic massif enlarged">
+    <figcaption>The massif at full sensor resolution. Note that the peak rises only ~3,500&#8211;4,000 ft
+    above a broad forested volcanic plateau &#8212; not the ~10,000 ft of relief a major stratocone would show.</figcaption>
+  </figure>
+  <figure>
+    <img src="assets/img_peak.jpg" alt="Summit close-up">
+    <figcaption>Summit detail. A jagged, asymmetric crown with radiating pale gullies and patchy
+    seasonal snow &#8212; a plug dome, not a glaciated cone. No permanent ice.</figcaption>
+  </figure>
+</div>
+
+<h3>Five diagnostic features</h3>
+<div class="card" style="margin-top:12px">
+<dl class="kv">
+  <div><dt>Central summit</dt><dd>steep dacite plug dome, patchy late-July snow <b>&#8594; Lassen Peak</b></dd></div>
+  <div><dt>Pale flat-topped mass, frame left</dt><dd>dome cluster + bright unvegetated apron <b>&#8594; Chaos Crags / Chaos Jumbles</b></dd></div>
+  <div><dt>Rugged domes, frame right</dt><dd>Reading Pk / Bumpass Mtn / Mt Conard highland</dd></div>
+  <div><dt>Isolated bare pale patch below summit</dt><dd>hydrothermal / pumice ground (Sulphur Works area)</dd></div>
+  <div><dt>Near-field checkerboard</dt><dd>Sierra Pacific timberland clearcuts, Shingletown&#8211;Viola&#8211;Manton</dd></div>
+</dl>
+</div>
+<p class="note">Chaos Crags sits due <b>north</b> of Lassen Peak. Its appearance on the <em>left</em> of frame
+fixes the view direction as eastward &#8212; independently corroborated by the sun (below).</p>
+
+<h2><span>03</span> Flight reconstruction</h2>
+<p>DL4125 is a SkyWest-operated Embraer <b>E175LL</b>, scheduled SMF&#8202;13:17&#8202;&#8594;&#8202;SEA&#8202;15:25, tracking up
+the Sacramento Valley past Red Bluff and Redding. The capture timestamp is <b>13:31:24.618 PDT</b> &#8212;
+roughly 20 minutes after wheels-up, still in the upper climb, near abeam Red Bluff.
+The orange wedge is the reconstructed 49.6&#176; field of view.</p>
+<div class="mapwrap">
+<svg id="fmap" viewBox="0 0 798 900" class="map" role="img" aria-label="Flight map of northern California showing the reconstructed track of DL4125 and the sight line to Lassen Peak">
+  <defs>
+    <linearGradient id="fovg" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="var(--accent)" stop-opacity=".26"/>
+      <stop offset="100%" stop-color="var(--accent)" stop-opacity=".02"/>
+    </linearGradient>
+    <marker id="arw" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--track)"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="798" height="900" class="bg"/>
+  <g class="grid">
+    <line x1="156.1" y1="0" x2="156.1" y2="900"/><line x1="329.6" y1="0" x2="329.6" y2="900"/><line x1="503.1" y1="0" x2="503.1" y2="900"/><line x1="676.6" y1="0" x2="676.6" y2="900"/>
+    <line x1="0" y1="763.3" x2="798" y2="763.3"/><line x1="0" y1="535.4" x2="798" y2="535.4"/><line x1="0" y1="307.6" x2="798" y2="307.6"/>
+  </g>
+  <text x="4" y="758.3" class="lbl-grid">39°N</text><text x="4" y="530.4" class="lbl-grid">40°N</text><text x="4" y="302.6" class="lbl-grid">41°N</text>
+  <text x="160.1" y="894" class="lbl-grid">123°W</text><text x="333.6" y="894" class="lbl-grid">122°W</text><text x="507.1" y="894" class="lbl-grid">121°W</text><text x="680.6" y="894" class="lbl-grid">120°W</text>
+
+  <polygon points="320.9,512.7 355.6,455.7 381.7,398.7 433.7,364.6 485.7,375.9 511.8,444.3 485.7,524.1 425.0,569.6 364.3,546.8" class="highland"/>
+  <text x="425.0" y="501.3" class="lbl-region">SOUTHERN CASCADES</text>
+  <polygon points="407.7,865.8 373.0,740.5 338.3,626.6 320.9,512.7 277.6,387.3 234.2,330.4 199.5,398.7 225.5,524.1 251.5,638.0 286.2,751.9 329.6,865.8" class="valley"/>
+  <text x="303.6" y="683.5" class="lbl-region" transform="rotate(-72 303.6 683.5)">SACRAMENTO VALLEY</text>
+
+  <ellipse cx="476.2" cy="477.3" rx="11" ry="8" class="water"/><text x="476.2" y="496.3" text-anchor="middle" class="lbl-water">Lake Almanor</text>
+<ellipse cx="548.2" cy="387.3" rx="8" ry="11" class="water"/><text x="548.2" y="409.3" text-anchor="middle" class="lbl-water">Eagle Lake</text>
+<ellipse cx="624.5" cy="489.9" rx="13" ry="7" class="water"/><text x="624.5" y="507.9" text-anchor="middle" class="lbl-water">Honey Lake</text>
+<ellipse cx="274.1" cy="353.2" rx="10" ry="7" class="water"/><text x="274.1" y="371.2" text-anchor="middle" class="lbl-water">Shasta Lake</text>
+<ellipse cx="582.0" cy="91.1" rx="6" ry="13" class="water"/><text x="582.0" y="115.1" text-anchor="middle" class="lbl-water">Goose Lake</text>
+  <polyline points="0.0,79.7 676.6,79.7" class="border"/>
+<polyline points="676.6,79.7 676.6,763.3" class="border"/>
+<polyline points="676.6,763.3 798.0,882.7" class="border"/>
+<text x="225.5" y="41.0" text-anchor="middle" class="lbl-state" transform="rotate(0 225.5 41.0)">OREGON</text>
+<text x="742.5" y="330.4" text-anchor="middle" class="lbl-state" transform="rotate(0 742.5 330.4)">NEVADA</text>
+<text x="468.4" y="170.9" text-anchor="middle" class="lbl-state">CALIFORNIA</text>
+
+  <!-- planned remainder of the route -->
+  <polyline points="400.6,832.7 366.0,717.7 329.6,569.6 312.3,467.1 281.0,319.0 268.9,170.9" class="track-plan"/>
+
+  <!-- capture-moment geometry, revealed once the aircraft arrives -->
+  <g class="reveal">
+    <path d="M312.3,467.1 L624.1,-9.2 A 569.3 569.3 0 0 1 876.5,396.3 Z" fill="url(#fovg)"/>
+    <line x1="312.3" y1="467.1" x2="624.1" y2="-9.2" class="fov-edge"/>
+    <line x1="312.3" y1="467.1" x2="876.5" y2="396.3" class="fov-edge"/>
+    <line x1="312.3" y1="467.1" x2="794.8" y2="165.7" class="axis"/>
+    <line x1="312.3" y1="467.1" x2="415.5" y2="424.2" class="sight"/>
+    <text x="363.9" y="437.6" class="lbl-sight">67°T &#183; 29 nm</text>
+    <line x1="312.3" y1="467.1" x2="280.5" y2="638.8" class="sunray"/>
+    <circle cx="280.5" cy="638.8" r="7" class="sundisc"/>
+    <text x="280.5" y="660.8" text-anchor="middle" class="lbl-sun">SUN 190.5° / 68° alt</text>
+  </g>
+
+  <!-- flown track: stroke is drawn in by script -->
+  <path id="flownpath" d="M400.6,832.7 L366.0,717.7 L329.6,569.6 L312.3,467.1" class="track-flown"/>
+
+  <path d="M415.5,415.2 L424.5,430.5 L406.5,430.5 Z" class="pk-main"/>
+<text x="429.5" y="418.2" class="lbl-peak">Lassen Peak  10,457 ft</text>
+<path d="M406.9,431.1 L411.9,439.6 L401.9,439.6 Z" class="pk"/>
+<text x="414.9" y="448.1" class="lbl-minor">Brokeoff Mtn</text>
+<path d="M412.4,407.6 L417.4,416.1 L407.4,416.1 Z" class="pk"/>
+<text x="420.4" y="424.6" class="lbl-minor">Chaos Crags</text>
+<path d="M430.9,430.2 L435.9,438.7 L425.9,438.7 Z" class="pk"/>
+<text x="438.9" y="447.2" class="lbl-minor">Mt Conard</text>
+<path d="M295.8,206.4 L303.8,220.0 L287.8,220.0 Z" class="pk-out"/>
+<text x="308.8" y="218.4" class="lbl-out">Mt Shasta 14,179 ft — ruled out</text>
+  <circle cx="417.4" cy="858.5" r="3.2" class="city"/><text x="410.4" y="862.5" text-anchor="end" class="lbl-city">Sacramento</text>
+<circle cx="358.1" cy="597.2" r="3.2" class="city"/><text x="365.1" y="601.2" text-anchor="start" class="lbl-city">Chico</text>
+<circle cx="288.7" cy="494.9" r="3.2" class="city"/><text x="281.7" y="498.9" text-anchor="end" class="lbl-city">Red Bluff</text>
+<circle cx="261.6" cy="401.7" r="3.2" class="city"/><text x="254.6" y="405.7" text-anchor="end" class="lbl-city">Redding</text>
+<circle cx="563.3" cy="440.7" r="3.2" class="city"/><text x="570.3" y="444.7" text-anchor="start" class="lbl-city">Susanville</text>
+<circle cx="512.3" cy="549.8" r="3.2" class="city"/><text x="519.3" y="553.8" text-anchor="start" class="lbl-city">Quincy</text>
+<circle cx="348.9" cy="423.3" r="3.2" class="city"/><text x="341.9" y="427.3" text-anchor="end" class="lbl-city">Shingletown</text>
+<circle cx="219.4" cy="140.1" r="3.2" class="city"/><text x="212.4" y="144.1" text-anchor="end" class="lbl-city">Yreka</text>
+<circle cx="582.5" cy="196.6" r="3.2" class="city"/><text x="589.5" y="200.6" text-anchor="start" class="lbl-city">Alturas</text>
+
+  <!-- KSMF -->
+  <g>
+    <rect x="395.6" y="827.7" width="10" height="10" class="apt"/>
+    <text x="413.6" y="836.7" class="lbl-apt">KSMF &#183; dep 13:17</text>
+  </g>
+
+  <!-- capture marker + aircraft -->
+  <g class="reveal">
+    <circle cx="312.3" cy="467.1" r="19" class="pulse"/>
+    <text x="286.3" y="451.1" text-anchor="end" class="lbl-ac">DL4125 &#183; 20:31:24Z</text>
+    <text x="286.3" y="465.1" text-anchor="end" class="lbl-ac-sub">40.30°N 122.10°W &#183; ~FL320</text>
+  </g>
+  <g id="planeg" transform="translate(400.6,832.7) rotate(-16)">
+    <path d="M0,-13 L3,-4 L15,4 L15,7 L3,3 L3,9 L7,13 L7,15 L0,13 L-7,15 L-7,13 L-3,9 L-3,3 L-15,7 L-15,4 L-3,-4 Z" class="plane"/>
+  </g>
+
+  <g transform="translate(28,860)">
+    <line x1="0" y1="0" x2="61.1" y2="0" class="scale"/>
+    <line x1="0" y1="-5" x2="0" y2="5" class="scale"/>
+    <line x1="61.1" y1="-5" x2="61.1" y2="5" class="scale"/>
+    <text x="0" y="-10" class="lbl-grid">16 nm</text>
+  </g>
+
+  <rect x="0.5" y="0.5" width="797" height="899" class="frame"/>
+</svg></div>
+
+<div class="hud">
+  <div class="hud-cell"><span class="hud-k">Elapsed clock</span><span class="hud-v" id="t-clock">13:17:00</span></div>
+  <div class="hud-cell"><span class="hud-k">Altitude</span><span class="hud-v" id="t-alt">ground</span></div>
+  <div class="hud-cell"><span class="hud-k">Track distance</span><span class="hud-v" id="t-dist">0 nm</span></div>
+  <div class="hud-cell"><span class="hud-k">Status</span><span class="hud-v" id="t-stat">taxi</span></div>
+  <button id="replay" type="button">&#9654; Replay</button>
+</div>
+<p class="note">The animation is a reconstruction on a 4.6&#8202;s timeline, not an ADS-B replay: the clock, altitude and distance readouts are interpolated along a nominal climb profile. Aircraft position is derived, not tracked &#8212; it is the point on the plausible SMF&#8211;SEA
+track that satisfies the photogrammetric range in step 04. Lake outlines are schematic.</p>
+
+<h2><span>04</span> Photogrammetry &#8212; range to target</h2>
+<p>EXIF gives a 26&#8202;mm-equivalent lens: 69.4&#176; across the long sensor axis, which after roll correction
+is the <em>vertical</em> axis. That yields a focal length of 1,444&#8202;px in the 1500&#215;2000 corrected frame.
+The summit sits <b>10.18&#176;</b> below the true horizon. Subtracting horizon dip and solving for slant range
+with an Earth-curvature correction gives distance as a function of altitude:</p>
+<div class="tblwrap">
+<table>
+<thead><tr><th>Altitude</th><th>Horizon dip</th><th>Depression below horiz.</th><th>Range</th><th>Range</th></tr></thead>
+<tbody>
+<tr><td>FL240</td><td>2.74&#176;</td><td>7.44&#176;</td><td>32.2 km</td><td>17.4 nm</td></tr>
+<tr><td>FL280</td><td>2.96&#176;</td><td>7.22&#176;</td><td>43.4 km</td><td>23.4 nm</td></tr>
+<tr class="hl"><td>FL320 &#8212; best fit</td><td>3.17&#176;</td><td>7.02&#176;</td><td>55.3 km</td><td>29.9 nm</td></tr>
+<tr><td>FL360</td><td>3.36&#176;</td><td>6.82&#176;</td><td>68.1 km</td><td>36.8 nm</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">Cross-check: an E175 ~20 minutes after departure is typically passing FL300&#8211;FL340 and has
+covered 95&#8211;115 nm. Red Bluff is 94 nm from SMF and 38 nm from Lassen Peak; a point just northeast of it
+satisfies both the range and the timing. Consistent within a few nautical miles.</p>
+
+<h2><span>05</span> Solar cross-check</h2>
+<div class="grid2">
+  <div class="card">
+    <h4>Computed sun position</h4>
+    <dl class="kv">
+      <div><dt>Instant (UTC)</dt><dd>2026-07-29 20:31:24</dd></div>
+      <div><dt>Local</dt><dd>13:31:24 PDT (UTC&#8722;07:00)</dd></div>
+      <div><dt>Solar azimuth</dt><dd><b>190.5&#176;</b> (just W of S)</dd></div>
+      <div><dt>Solar altitude</dt><dd>68.0&#176;</dd></div>
+      <div><dt>Shadows cast toward</dt><dd><b>010&#176;</b> (nearly due N)</dd></div>
+    </dl>
+  </div>
+  <div class="card">
+    <h4>What the image shows</h4>
+    <p style="margin:0;font-size:14px;color:var(--dim)">Terrain shadows in the frame fall to the
+    <b>left</b>, and the summit's left flank is the shaded one. If shadows point north and north is
+    frame-left, the camera was pointing <b>east</b> &#8212; from a northbound aircraft, that is the
+    <b>starboard</b> side. This is derived purely from the timestamp and pixel shading, and it agrees
+    with both the Chaos Crags placement and the wing geometry.</p>
+  </div>
+</div>
+
+<h2><span>06</span> Seat determination</h2>
+<div class="grid2">
+  <figure>
+    <img src="assets/img_wing.jpg" alt="Wing and winglet detail">
+    <figcaption>Tall canted winglet in Delta blue with static-discharge wicks along the trailing edge &#8212;
+    the E175LL "long wing". The upper surface and trailing-edge flap-track fairings are visible, so the
+    camera is <b>aft</b> of the wing looking forward.</figcaption>
+  </figure>
+  <div>
+    <h3 style="margin-top:0">Starboard side, well aft of the wing</h3>
+    <p style="font-size:14.5px">Three independent lines &#8212; sun azimuth, Chaos Crags on the left, and the
+    wing running from lower-left (root) to upper-centre (tip) &#8212; all put the camera on the right side of
+    the aircraft. Seeing the entire winglet plus the trailing edge from behind places the seat several rows
+    back from the wing box.</p>
+    <p style="font-size:14.5px">On this E175 the lettering is <b>A</b> (port window), <b>B</b> (port aisle),
+    <b>C</b> (starboard aisle), <b>D</b> (starboard window). <b>Confirmed by the passenger: row 20, seats
+    C&#8211;D, with the frame shot from 20C across the 20D window.</b> The wing box spans roughly rows
+    11&#8211;14, which matches the aft-of-wing viewing geometry.</p>
+  </div>
+</div>
+<div class="cabinwrap" style="margin-top:16px"><svg viewBox="0 0 760 160" class="cabin" role="img" aria-label="E175 cabin seat map showing seat 20C"><text x="692" y="23" text-anchor="middle" class="c-row">1</text>
+<rect x="683" y="32" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="683" y="70" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="683" y="85" width="18" height="12" rx="2.5" class="seat"/>
+<text x="663" y="23" text-anchor="middle" class="c-row">2</text>
+<rect x="654" y="32" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="654" y="70" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="654" y="85" width="18" height="12" rx="2.5" class="seat"/>
+<text x="634" y="23" text-anchor="middle" class="c-row">3</text>
+<rect x="625" y="32" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="625" y="70" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="625" y="85" width="18" height="12" rx="2.5" class="seat"/>
+<text x="605" y="23" text-anchor="middle" class="c-row">4</text>
+<rect x="596" y="32" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="596" y="47" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="596" y="70" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="596" y="85" width="18" height="12" rx="2.5" class="seat"/>
+<text x="576" y="23" text-anchor="middle" class="c-row">5</text>
+<rect x="567" y="32" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="567" y="47" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="567" y="70" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="567" y="85" width="18" height="12" rx="2.5" class="seat"/>
+<text x="547" y="23" text-anchor="middle" class="c-row">6</text>
+<rect x="538" y="32" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="538" y="47" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="538" y="70" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="538" y="85" width="18" height="12" rx="2.5" class="seat"/>
+<text x="518" y="23" text-anchor="middle" class="c-row">7</text>
+<rect x="509" y="32" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="509" y="47" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="509" y="70" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="509" y="85" width="18" height="12" rx="2.5" class="seat"/>
+<text x="489" y="23" text-anchor="middle" class="c-row">8</text>
+<rect x="480" y="32" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="480" y="47" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="480" y="70" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="480" y="85" width="18" height="12" rx="2.5" class="seat"/>
+<text x="460" y="23" text-anchor="middle" class="c-row">9</text>
+<rect x="451" y="32" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="451" y="47" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="451" y="70" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="451" y="85" width="18" height="12" rx="2.5" class="seat"/>
+<text x="431" y="23" text-anchor="middle" class="c-row">10</text>
+<rect x="422" y="32" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="422" y="47" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="422" y="70" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="422" y="85" width="18" height="12" rx="2.5" class="seat"/>
+<text x="402" y="23" text-anchor="middle" class="c-row">11</text>
+<rect x="393" y="32" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="393" y="47" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="393" y="70" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="393" y="85" width="18" height="12" rx="2.5" class="seat"/>
+<text x="373" y="23" text-anchor="middle" class="c-row">12</text>
+<rect x="364" y="32" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="364" y="47" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="364" y="70" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="364" y="85" width="18" height="12" rx="2.5" class="seat"/>
+<text x="344" y="23" text-anchor="middle" class="c-row">13</text>
+<rect x="335" y="32" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="335" y="47" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="335" y="70" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="335" y="85" width="18" height="12" rx="2.5" class="seat"/>
+<text x="315" y="23" text-anchor="middle" class="c-row">14</text>
+<rect x="306" y="32" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="306" y="47" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="306" y="70" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="306" y="85" width="18" height="12" rx="2.5" class="seat"/>
+<text x="286" y="23" text-anchor="middle" class="c-row">15</text>
+<rect x="277" y="32" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="277" y="47" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="277" y="70" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="277" y="85" width="18" height="12" rx="2.5" class="seat"/>
+<text x="257" y="23" text-anchor="middle" class="c-row">16</text>
+<rect x="248" y="32" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="248" y="47" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="248" y="70" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="248" y="85" width="18" height="12" rx="2.5" class="seat"/>
+<text x="228" y="23" text-anchor="middle" class="c-row">17</text>
+<rect x="219" y="32" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="219" y="47" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="219" y="70" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="219" y="85" width="18" height="12" rx="2.5" class="seat"/>
+<text x="199" y="23" text-anchor="middle" class="c-row">18</text>
+<rect x="190" y="32" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="190" y="47" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="190" y="70" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="190" y="85" width="18" height="12" rx="2.5" class="seat"/>
+<text x="170" y="23" text-anchor="middle" class="c-row">19</text>
+<rect x="161" y="32" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="161" y="47" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="161" y="70" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="161" y="85" width="18" height="12" rx="2.5" class="seat"/>
+<text x="141" y="23" text-anchor="middle" class="c-row">20</text>
+<rect x="132" y="32" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="132" y="47" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="132" y="70" width="18" height="12" rx="2.5" class="seat-hit"/>
+<rect x="132" y="85" width="18" height="12" rx="2.5" class="seat-hit"/>
+<text x="112" y="23" text-anchor="middle" class="c-row">21</text>
+<rect x="103" y="32" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="103" y="47" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="103" y="70" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="103" y="85" width="18" height="12" rx="2.5" class="seat"/>
+<text x="83" y="23" text-anchor="middle" class="c-row">22</text>
+<rect x="74" y="32" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="74" y="47" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="74" y="70" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="74" y="85" width="18" height="12" rx="2.5" class="seat"/>
+<rect x="301" y="29" width="115" height="76" class="wingbox"/>
+<text x="358" y="124" text-anchor="middle" class="c-note">wing box</text>
+<line x1="141" y1="100" x2="141" y2="83" class="callout"/>
+<text x="141" y="116" text-anchor="middle" class="c-hit">20C &#183; camera</text>
+<text x="58" y="42" text-anchor="end" class="c-let">A</text>
+<text x="58" y="57" text-anchor="end" class="c-let">B</text>
+<text x="58" y="80" text-anchor="end" class="c-let">C</text>
+<text x="58" y="95" text-anchor="end" class="c-let">D</text>
+<text x="58" y="23" text-anchor="end" class="c-note">PORT &#8593;</text>
+<text x="58" y="124" text-anchor="end" class="c-note">STBD &#8595;</text>
+<text x="720" y="66" class="c-note">&#8594; NOSE</text></svg></div>
+<p class="note">The purely image-derived claim was <em>starboard side, several rows aft of the wing</em>;
+the exact row and letter are passenger-confirmed. Shooting from the aisle seat across the window explains
+the steep camera roll &#8212; the phone had to be tilted to clear the window frame, which is visible as the
+curved cabin-window vignette in the lower right of the original frame.</p>
+
+<h2><span>07</span> Candidates ruled out</h2>
+<div class="ruled">
+  <div class="name">Mount Shasta &#183; 14,179 ft <span class="x">&#8212; EXCLUDED</span></div>
+  <p>The obvious first guess, and 165 nm from SMF on nearly the right bearing. But Shasta is a solitary
+  giant standing ~10,000 ft above Shasta Valley, with a conspicuous secondary cone (Shastina) on its
+  west flank and four permanent glaciers that read as solid white masses in late July. The photographed
+  peak has none of these: modest relief above a continuous dome-studded plateau, no satellite cone, and
+  only patchy snow in gullies. Timing also fails &#8212; 165 nm in ~20 minutes of flight is not achievable.</p>
+</div>
+<div class="ruled">
+  <div class="name">Mount McLoughlin &#183; 9,495 ft <span class="x">&#8212; EXCLUDED</span></div>
+  <p>Morphologically closer, and also ringed by clearcut checkerboard. But it is 228 nm from SMF &#8212;
+  physically unreachable at the capture time, and in Oregon, not "northern California".</p>
+</div>
+<div class="ruled">
+  <div class="name">Crater Lake / Diamond Peak <span class="x">&#8212; EXCLUDED</span></div>
+  <p>256 nm and 291 nm from SMF respectively. Far outside the time budget, and neither matches the
+  single-summit-plus-dome-cluster form.</p>
+</div>
+
+<h2><span>08</span> Method</h2>
+<ol class="steps">
+  <li><h3>Metadata extraction</h3><p><code>exiftool -a -G1</code> and <code>mdls</code>. No GPS block present &#8212;
+  Location Services were off or the phone was in airplane mode. Recovered: iPhone 13 mini, 26&#8202;mm equiv,
+  f/1.6, 1/1647&#8202;s, ISO&#8202;50, and the precise timestamp 2026-07-29 13:31:24.618&#8202;&#8722;07:00.</p></li>
+  <li><h3>Orientation recovery</h3><p>Raw HEIC is 4032&#215;3024 tagged <em>Rotate 90 CW</em>. Applied a 90&#176;
+  rotation to level the horizon; verified against the Apple <code>AccelerationVector</code> maker-note
+  (0.115, &#8722;0.913, &#8722;0.374), which shows the device near-upright with the optical axis ~22&#176; below level.</p></li>
+  <li><h3>Terrain reading</h3><p>Upsampled crops from the full-resolution frame. Identified the plug-dome
+  summit form, the Chaos Crags dome cluster with its Chaos Jumbles apron, hydrothermal bare ground, and the
+  Sierra Pacific clearcut checkerboard.</p></li>
+  <li><h3>Flight-envelope bounding</h3><p>Great-circle distances from KSMF to each candidate peak, checked
+  against elapsed time since a 13:17 scheduled departure. This alone eliminated everything north of Shasta.</p></li>
+  <li><h3>Photogrammetric ranging</h3><p>Pinhole model from the EXIF focal length; measured the pixel offset
+  between horizon and summit; solved for range across FL240&#8211;FL360 with horizon dip and curvature drop.</p></li>
+  <li><h3>Solar verification</h3><p>Independently computed sun azimuth/altitude for the timestamp and
+  position, then matched the predicted shadow direction against the pixels to fix view heading and seat side.</p></li>
+</ol>
+
+<footer>
+  IMG_0762.HEIC &#183; 4032&#215;3024 &#183; 2.8&#8202;MB &#183; Apple iPhone 13 mini &#183; iOS 18.7.8<br>
+  Dossier compiled 2026-07-29 &#183; sources:
+  <a href="https://www.flightera.net/en/flight/Delta+Air+Lines/DL4125">Flightera DL4125</a>,
+  <a href="https://www.flightaware.com/live/flight/DAL4125">FlightAware DAL4125</a>,
+  <a href="https://www.airportia.com/flights/dl4125/sacramento/seattle-tacoma/">Airportia SMF&#8211;SEA</a>
+</footer>
+</div>
+<script src="assets/map.js" defer></script>
+</body>
+</html>
