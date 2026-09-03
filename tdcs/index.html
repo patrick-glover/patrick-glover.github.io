@@ -1,0 +1,2922 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Neuron · Network · Stimulation</title>
+<style>
+/* ============================================================================
+   Three models, three tabs. Built as a teaching instrument for a live talk:
+   the speaker narrates, the page shows. Copy on screen is deliberately terse.
+
+   Ground is a warm near-black. Series hues are the validated dark-mode
+   categorical steps, checked all-pairs against this panel surface.
+   ========================================================================= */
+:root {
+  color-scheme: dark;
+
+  --page:     #12100f;
+  --panel:    #1b1917;
+  --raised:   #232120;
+  --sunken:   #0e0c0b;
+
+  --ink-1:    #f2efe9;
+  --ink-2:    #b8b2a8;
+  --ink-3:    #85807a;
+  --ink-4:    #5c5854;
+
+  --grid:     #232020;
+  --axis:     #3a3532;
+  --rule:     rgba(242, 239, 233, 0.10);
+  --rule-2:   rgba(242, 239, 233, 0.05);
+
+  --exc:      #d95926;   /* excitatory · Na+ */
+  --inh:      #3987e5;   /* inhibitory · K+ */
+  --aux:      #199e70;   /* LFP */
+  --trace:    #f2efe9;   /* membrane voltage */
+
+  --depol:    #e66767;
+  --hyper:    #3987e5;
+
+  --ictal:    #d03b3b;
+  --ok:       #0ca30c;
+  --warn:     #fab219;
+
+  --serif: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --sans:  ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  --mono:  ui-monospace, "SF Mono", SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink-1);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* EEG page grid as the substrate, near-invisible */
+body::before {
+  content: "";
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(to right,  var(--grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: 0.4;
+}
+
+.wrap { position: relative; z-index: 1; max-width: 1500px; margin: 0 auto; padding: 0 32px 80px; }
+
+/* ------------------------------------------------------------------ tabs -- */
+.topbar {
+  position: sticky; top: 0; z-index: 30;
+  display: flex; align-items: center; gap: 28px;
+  padding: 16px 0 0;
+  background: color-mix(in srgb, var(--page) 93%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 26px;
+}
+
+.brand {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--ink-4); white-space: nowrap;
+  padding-bottom: 14px;
+}
+
+.tabs { display: flex; gap: 4px; }
+
+.tab {
+  appearance: none; border: 0; background: none; cursor: pointer;
+  font: inherit; color: var(--ink-4);
+  padding: 4px 2px 13px; margin-right: 26px;
+  border-bottom: 2px solid transparent;
+  transition: color 0.16s, border-color 0.16s;
+  display: flex; align-items: baseline; gap: 9px;
+}
+.tab:hover { color: var(--ink-2); }
+.tab:focus-visible { outline: 2px solid var(--inh); outline-offset: 3px; }
+.tab-n {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+  color: var(--ink-4); transition: color 0.16s;
+}
+.tab-t { font-size: 15px; font-weight: 500; letter-spacing: -0.005em; white-space: nowrap; }
+.tab[aria-selected="true"] { color: var(--ink-1); border-bottom-color: var(--exc); }
+.tab[aria-selected="true"] .tab-n { color: var(--exc); }
+
+/* ------------------------------------------------------------- transport --
+   Everything on this page runs far slower than life, because the events worth
+   watching are milliseconds wide. The speed is therefore a first-class control
+   and is stated on screen rather than hidden in the code. */
+.transport {
+  margin-left: auto; display: flex; align-items: center; gap: 12px;
+  padding-bottom: 11px; white-space: nowrap;
+}
+.speed-k {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--ink-4);
+}
+.speed { display: flex; border: 1px solid var(--rule); border-radius: 2px; overflow: hidden; }
+.sp {
+  appearance: none; border: 0; border-left: 1px solid var(--rule);
+  background: var(--raised); color: var(--ink-3);
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em;
+  padding: 6px 9px; cursor: pointer; transition: background 0.14s, color 0.14s;
+}
+.sp:first-child { border-left: 0; }
+.sp:hover { background: #2c2927; color: var(--ink-1); }
+.sp:focus-visible { outline: 2px solid var(--inh); outline-offset: -2px; }
+.sp[aria-pressed="true"] { background: var(--ink-1); color: var(--page); }
+.clock-t {
+  font-family: var(--mono); font-size: 10.5px; font-variant-numeric: tabular-nums;
+  color: var(--ink-3); min-width: 92px; text-align: right;
+}
+
+/* ------------------------------------------------------------------ page -- */
+.view { display: none; }
+.view.is-active { display: block; animation: rise 0.32s cubic-bezier(0.2, 0.7, 0.2, 1); }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+h1.h {
+  font-family: var(--serif);
+  font-size: clamp(26px, 2.9vw, 36px);
+  line-height: 1.1; letter-spacing: -0.018em; font-weight: 400;
+  margin: 0 0 10px; max-width: 24ch;
+}
+.lede {
+  font-family: var(--serif); font-size: 17px; line-height: 1.5;
+  color: var(--ink-2); max-width: 62ch; margin: 0 0 24px;
+}
+.lede b { color: var(--ink-1); font-weight: 600; }
+
+/* ------------------------------------------------------------ instruments -- */
+.rig { display: grid; gap: 16px; margin: 20px 0; }
+.rig.two  { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.rig.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.rig.side { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); align-items: start; }
+.rig.sheet { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); align-items: start; }
+
+.panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 3px; overflow: hidden; }
+
+.panel-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 9px 13px; border-bottom: 1px solid var(--rule-2); background: var(--raised);
+}
+.panel-name {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--ink-3); white-space: nowrap;
+}
+.panel-units { font-family: var(--mono); font-size: 9.5px; color: var(--ink-4); letter-spacing: 0.06em; }
+.panel-body { padding: 12px 13px 13px; }
+.panel-body.flush { padding: 0; }
+
+/* The ratio lives on the element so the box is right before JS runs;
+   fitCanvas only syncs the backing store to the laid-out size. */
+canvas { display: block; width: 100%; height: auto; }
+
+/* ------------------------------------------------------------- readouts --- */
+.readouts { display: flex; flex-wrap: wrap; gap: 18px 28px; }
+.ro-label {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.13em;
+  text-transform: uppercase; color: var(--ink-3); margin-bottom: 3px;
+}
+.ro-val {
+  font-family: var(--mono); font-size: 20px; font-variant-numeric: tabular-nums;
+  color: var(--ink-1); line-height: 1.1; letter-spacing: -0.01em;
+}
+.ro-val .u { font-size: 11px; color: var(--ink-3); margin-left: 3px; letter-spacing: 0; }
+.ro-val.sm { font-size: 15px; }
+
+/* the big state word — the thing the audience should read from the back row */
+.state {
+  font-family: var(--serif); font-size: 25px; line-height: 1.15;
+  letter-spacing: -0.01em; margin: 0 0 4px; transition: color 0.3s;
+}
+.state-sub { font-size: 13px; color: var(--ink-3); line-height: 1.45; }
+
+/* ------------------------------------------------------------- controls --- */
+.controls {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px 26px; padding: 16px 18px;
+  background: var(--panel); border: 1px solid var(--rule); border-radius: 3px;
+  margin: 18px 0; align-items: end;
+}
+
+.ctl-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+.ctl-name { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+.ctl-read { font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; color: var(--ink-1); }
+.ctl-note { font-size: 11.5px; color: var(--ink-4); line-height: 1.4; margin-top: 5px; }
+
+input[type=range] {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 18px; background: none; margin: 0; cursor: pointer;
+}
+input[type=range]::-webkit-slider-runnable-track { height: 2px; background: var(--axis); }
+input[type=range]::-moz-range-track { height: 2px; background: var(--axis); }
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 13px; height: 13px; border-radius: 50%;
+  background: var(--ink-1); margin-top: -5.5px; border: 0; transition: box-shadow 0.15s;
+}
+input[type=range]::-moz-range-thumb { width: 13px; height: 13px; border-radius: 50%; background: var(--ink-1); border: 0; }
+input[type=range]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(242, 239, 233, 0.12); }
+input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(57, 135, 229, 0.45); }
+input[type=range].hot::-webkit-slider-thumb { background: var(--exc); }
+input[type=range].hot::-moz-range-thumb { background: var(--exc); }
+
+.btn {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.13em;
+  text-transform: uppercase; color: var(--ink-1);
+  background: var(--raised); border: 1px solid var(--rule); border-radius: 2px;
+  padding: 9px 14px; cursor: pointer; white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn:hover { background: #2c2927; border-color: rgba(242, 239, 233, 0.22); }
+.btn:focus-visible { outline: 2px solid var(--inh); outline-offset: 2px; }
+.btn.primary { background: var(--exc); border-color: var(--exc); color: #fff; }
+.btn.primary:hover { background: #e8642e; }
+.btn.danger { border-color: rgba(208, 59, 59, 0.5); color: #ef8383; }
+.btn.danger:hover { background: rgba(208, 59, 59, 0.14); }
+.btn[aria-pressed="true"] { background: var(--ink-1); color: var(--page); border-color: var(--ink-1); }
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+/* --------------------------------------------------------------- figures -- */
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 9px; }
+.lg { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10px; color: var(--ink-3); letter-spacing: 0.05em; }
+.lg i { width: 12px; height: 2.5px; border-radius: 1px; flex: none; }
+.lg i.dot { width: 8px; height: 8px; border-radius: 50%; }
+.lg i.dash { background: repeating-linear-gradient(to right, var(--ink-3) 0 4px, transparent 4px 7px); }
+
+.note {
+  border: 1px solid var(--rule); border-left: 2px solid var(--ink-4);
+  background: rgba(242, 239, 233, 0.018);
+  padding: 12px 15px; margin: 16px 0;
+  font-size: 13.5px; line-height: 1.55; color: var(--ink-2); max-width: 76ch;
+}
+.note-k {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--ink-3); display: block; margin-bottom: 5px;
+}
+.note.hot { border-left-color: var(--exc); }
+.note.hot .note-k { color: var(--exc); }
+
+/* collapsible technical detail — the speaker opens it only if asked */
+details.more {
+  border-top: 1px solid var(--rule); margin: 26px 0 0; padding: 14px 0 0; max-width: 78ch;
+}
+details.more > summary {
+  cursor: pointer; list-style: none;
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--ink-4); transition: color 0.15s;
+}
+details.more > summary::-webkit-details-marker { display: none; }
+details.more > summary::before { content: "▸ "; }
+details.more[open] > summary::before { content: "▾ "; }
+details.more > summary:hover { color: var(--ink-2); }
+details.more > summary:focus-visible { outline: 2px solid var(--inh); outline-offset: 3px; }
+.more-body { margin-top: 12px; font-size: 13.5px; line-height: 1.6; color: var(--ink-3); }
+.more-body p { margin: 0 0 10px; }
+.more-body em { color: var(--ink-2); font-style: italic; }
+
+.eq {
+  font-family: var(--mono); font-size: 13px; color: var(--ink-2);
+  background: var(--sunken); border-left: 2px solid var(--axis);
+  padding: 11px 14px; margin: 12px 0; overflow-x: auto; line-height: 1.7;
+}
+
+table.data { border-collapse: collapse; width: 100%; font-size: 13px; margin: 4px 0; }
+table.data th, table.data td { text-align: left; padding: 6px 12px 6px 0; border-bottom: 1px solid var(--rule-2); }
+table.data th {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--ink-3); font-weight: 400;
+}
+table.data td { color: var(--ink-2); }
+table.data td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--ink-1); white-space: nowrap; }
+
+.skip { position: absolute; left: -9999px; background: var(--ink-1); color: var(--page); padding: 10px 16px; z-index: 100; }
+.skip:focus { left: 12px; top: 12px; }
+
+/* ---------------------------------------------------------------- mobile -- */
+@media (max-width: 1080px) {
+  .wrap { padding: 0 18px 60px; }
+  .topbar { gap: 16px; overflow-x: auto; }
+  .brand { display: none; }
+  .tab { margin-right: 18px; }
+  .transport { margin-left: 12px; }
+  .speed-k, .clock-t { display: none; }
+  .rig.two, .rig.three, .rig.side, .rig.sheet { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}
+</style>
+</head>
+<body data-palette="#3987e5,#d95926,#199e70,#e66767">
+<a class="skip" href="#main">Skip to content</a>
+<div class="wrap">
+  <div class="topbar">
+    <span class="brand">tDCS in focal epilepsy</span>
+    <div class="tabs" role="tablist" aria-label="Models">
+      <button class="tab" role="tab" id="tab-0" aria-controls="view-0" aria-selected="true">
+        <span class="tab-n">01</span><span class="tab-t">Neuron</span>
+      </button>
+      <button class="tab" role="tab" id="tab-1" aria-controls="view-1" aria-selected="false">
+        <span class="tab-n">02</span><span class="tab-t">Network</span>
+      </button>
+      <button class="tab" role="tab" id="tab-2" aria-controls="view-2" aria-selected="false">
+        <span class="tab-n">03</span><span class="tab-t">Stimulation</span>
+      </button>
+    </div>
+    <div class="transport">
+      <span class="speed-k">Speed</span>
+      <div class="speed" role="group" aria-label="Playback speed">
+        <button class="sp" data-speed="0.004" aria-pressed="false">1/250</button>
+        <button class="sp" data-speed="0.02" aria-pressed="true">1/50</button>
+        <button class="sp" data-speed="0.1" aria-pressed="false">1/10</button>
+        <button class="sp" data-speed="1" aria-pressed="false">live</button>
+      </div>
+      <button class="btn" id="b-pause" style="padding:6px 11px">Pause</button>
+      <span class="clock-t" id="clock-t">0 ms</span>
+    </div>
+  </div>
+
+<main id="main">
+
+  <!-- ══════════════════════════════════════════════════════════ 1 · NEURON -->
+  <section class="view is-active" id="view-0" role="tabpanel" aria-labelledby="tab-0">
+    <h1 class="h">One neuron, four equations</h1>
+    <p class="lede">
+      Hodgkin–Huxley, integrated live. Sodium in, potassium out, all-or-none.
+      The sliders are the two conductances every sodium- and potassium-channel drug moves.
+    </p>
+
+    <div class="rig">
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-name">Membrane potential</span>
+          <span class="panel-units">mV vs ms</span>
+        </div>
+        <div class="panel-body flush"><canvas id="cv-v" data-ar="5.2" style="aspect-ratio:5.2"></canvas></div>
+      </div>
+    </div>
+
+    <div class="rig side">
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-name">Ionic currents</span>
+          <span class="panel-units">µA/cm²</span>
+        </div>
+        <div class="panel-body flush"><canvas id="cv-i" data-ar="3.4" style="aspect-ratio:3.4"></canvas></div>
+        <div class="panel-body" style="padding-top:0">
+          <div class="legend">
+            <span class="lg"><i style="background:var(--exc)"></i>I<sub>Na</sub> inward</span>
+            <span class="lg"><i style="background:var(--inh)"></i>I<sub>K</sub> outward</span>
+            <span class="lg"><i style="background:var(--ink-4)"></i>leak</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><span class="panel-name">Firing rate vs drive</span><span class="panel-units">Hz</span></div>
+        <div class="panel-body flush"><canvas id="cv-fi" data-ar="2.2" style="aspect-ratio:2.2"></canvas></div>
+        <div class="panel-body" style="padding-top:0">
+          <div class="legend">
+            <span class="lg"><i style="background:var(--ink-3)"></i>default channels</span>
+            <span class="lg"><i style="background:var(--exc)"></i>as set</span>
+            <span class="lg"><i class="dot" style="background:var(--trace)"></i>now</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div>
+        <div class="ctl-top"><span class="ctl-name">Drive</span><span class="ctl-read" id="r-iext">8.0 µA/cm²</span></div>
+        <input type="range" id="s-iext" min="0" max="20" step="0.1" value="8">
+        <div class="ctl-note">Synaptic input reaching the cell.</div>
+      </div>
+      <div>
+        <div class="ctl-top"><span class="ctl-name">Sodium conductance</span><span class="ctl-read" id="r-gna">100%</span></div>
+        <input type="range" id="s-gna" class="hot" min="50" max="150" step="1" value="100">
+        <div class="ctl-note">Phenytoin, carbamazepine, lacosamide block this. So does loss-of-function <em>SCN1A</em>.</div>
+      </div>
+      <div>
+        <div class="ctl-top"><span class="ctl-name">Potassium conductance</span><span class="ctl-read" id="r-gk">100%</span></div>
+        <input type="range" id="s-gk" class="hot" min="20" max="200" step="1" value="100">
+        <div class="ctl-note">Retigabine opens K channels. <em>KCNQ2</em> loss closes them.</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="b-pulse">Single pulse</button>
+        <button class="btn" id="b-reset">Reset</button>
+      </div>
+    </div>
+
+    <div class="rig side">
+      <div class="panel">
+        <div class="panel-head"><span class="panel-name">Readout</span><span class="panel-units">live</span></div>
+        <div class="panel-body">
+          <div class="readouts">
+            <div><div class="ro-label">Firing rate</div><div class="ro-val" id="r-rate">0<span class="u">Hz</span></div></div>
+            <div><div class="ro-label">Threshold drive</div><div class="ro-val" id="r-rheo">—<span class="u">µA/cm²</span></div></div>
+            <div><div class="ro-label">Spike height</div><div class="ro-val sm" id="r-amp">—<span class="u">mV</span></div></div>
+            <div><div class="ro-label">Spike width</div><div class="ro-val sm" id="r-width">—<span class="u">ms</span></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><span class="panel-name">Try</span><span class="panel-units">three moves</span></div>
+        <div class="panel-body" style="font-size:13.5px;line-height:1.55;color:var(--ink-2)">
+          <p style="margin:0 0 9px">Take sodium to 80%. The threshold drive climbs steeply. Below about
+            70% the cell cannot fire at any drive — that is a sodium-channel blocker at a high dose.</p>
+          <p style="margin:0 0 9px">Take potassium to 60%. Threshold falls, the cell fires at almost any drive,
+            and each spike gets wider. Push it to 150% and it goes quiet.</p>
+          <p style="margin:0">Raise drive slowly through the threshold. Firing starts abruptly at
+            about 50 Hz, not from zero.</p>
+        </div>
+      </div>
+    </div>
+
+    <details class="more">
+      <summary>Under the hood</summary>
+      <div class="more-body">
+        <div class="eq">C dV/dt = I − ḡ<sub>Na</sub>m³h(V−E<sub>Na</sub>) − ḡ<sub>K</sub>n⁴(V−E<sub>K</sub>) − ḡ<sub>L</sub>(V−E<sub>L</sub>)</div>
+        <p>
+          Hodgkin and Huxley 1952, squid giant axon, integrated by Runge–Kutta at 0.01 ms.
+          The conductance sliders scale ḡ<sub>Na</sub> and ḡ<sub>K</sub> directly.
+        </p>
+        <p>
+          The firing-rate curve is measured by simulating the model at each drive, not fitted.
+          It starts at a <em>finite</em> rate rather than at zero because this system becomes
+          rhythmic through a Hopf bifurcation. Real cortical pyramidal cells mostly do not
+          behave this way, which is one reason the network tab uses a different neuron model.
+        </p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ═════════════════════════════════════════════════════════ 2 · NETWORK -->
+  <section class="view" id="view-1" role="tabpanel" aria-labelledby="tab-1">
+    <h1 class="h">A patch of cortex, wired to itself</h1>
+    <p class="lede">
+      Poke one spot and watch what the patch does with it. The excitability slider decides
+      whether the poke fades, travels, or never stops. That last one is a seizure, and nothing
+      is driving it.
+    </p>
+
+    <div class="rig sheet">
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-name">Cortical patch · 50 × 50</span>
+          <span class="panel-units" id="sheet-units">click to poke</span>
+        </div>
+        <div class="panel-body flush"><canvas id="cv-sheet" data-ar="1.0" style="aspect-ratio:1.0"></canvas></div>
+        <div class="panel-body" style="padding-top:0">
+          <div class="legend">
+            <span class="lg"><i class="dot" style="background:#ff7e3c"></i>excitatory cell · 2000</span>
+            <span class="lg"><i class="dot" style="background:#4684c8"></i>inhibitory · 500</span>
+            <span class="lg"><i class="dot" style="background:#2a2624"></i>silent</span>
+            <span class="lg">brightness = fired just now</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <div class="panel-head"><span class="panel-name">State</span><span class="panel-units">live</span></div>
+          <div class="panel-body">
+            <p class="state" id="r-state">Quiet</p>
+            <p class="state-sub" id="r-state-sub">Background firing only.</p>
+            <div class="readouts" style="margin-top:14px">
+              <div><div class="ro-label">Firing rate</div><div class="ro-val" id="r-rate2">0<span class="u">Hz</span></div></div>
+              <div><div class="ro-label">Patch recruited</div><div class="ro-val" id="r-recruit">0<span class="u">%</span></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <div class="panel-head"><span class="panel-name">Population rate</span><span class="panel-units">Hz · 1.2 s</span></div>
+          <div class="panel-body flush"><canvas id="cv-rate" data-ar="2.4" style="aspect-ratio:2.4"></canvas></div>
+          <div class="panel-body" style="padding-top:0">
+            <div class="legend">
+              <span class="lg"><i style="background:var(--exc)"></i>excitatory</span>
+              <span class="lg"><i style="background:var(--inh)"></i>inhibitory</span>
+              <span class="lg"><i class="dash"></i>seizure line</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div>
+        <div class="ctl-top"><span class="ctl-name">Excitability</span><span class="ctl-read" id="r-exc">40</span></div>
+        <input type="range" id="s-exc" class="hot" min="0" max="100" step="0.5" value="40">
+        <div class="ctl-note">Recurrent excitatory strength. The critical zone is the middle of the travel.</div>
+      </div>
+      <div>
+        <div class="ctl-top"><span class="ctl-name">Inhibition</span><span class="ctl-read" id="r-inh">100%</span></div>
+        <input type="range" id="s-inh" min="50" max="150" step="1" value="100">
+        <div class="ctl-note">Benzodiazepines and barbiturates raise this. Loss of interneurons lowers it.</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="b-poke-s">Small poke</button>
+        <button class="btn" id="b-poke-b">Big poke</button>
+        <button class="btn" id="b-reset2">Reset</button>
+      </div>
+    </div>
+
+    <div class="note hot">
+      <span class="note-k">The point of this tab</span>
+      Set excitability just below the critical zone and poke. The wave crosses the whole patch
+      and still dies. Nudge it up two notches and the same poke never stops. Nothing about the
+      poke changed — only what the network does with it.
+    </div>
+
+    <div class="note">
+      <span class="note-k">Reading the patch</span>
+      Every square is one neuron, in a fixed position, wired mostly to the neurons around it.
+      <b>Orange</b> is excitatory and <b>blue</b> is inhibitory, the same convention as the
+      sodium and potassium currents on the first tab. A square brightens the moment its cell
+      fires and fades over about ten milliseconds, so a travelling wave shows up as a moving
+      front rather than as scattered flashes.
+    </div>
+
+    <details class="more">
+      <summary>Under the hood</summary>
+      <div class="more-body">
+        <p>
+          2500 Izhikevich neurons, 80% excitatory, on a 50 × 50 sheet. Each cell connects mostly
+          to neighbours within a few cells, plus a small fraction of long-range axons. That local
+          wiring is what makes activity <em>propagate</em> rather than appear everywhere at once.
+        </p>
+        <p>
+          The self-sustaining state has a mechanism rather than a tuning. Hard firing loads
+          intracellular chloride faster than KCC2 clears it, the GABA<sub>A</sub> reversal drifts
+          depolarised, and inhibition loses its grip — so more firing weakens inhibition, which
+          permits more firing. That is the documented route to ictal inhibitory failure, and it is
+          what gives the patch a second state it can stay in.
+        </p>
+        <p>
+          Parameters are chosen so the three regimes are far apart on screen. Rates and
+          conductances here are not calibrated to any measurement.
+        </p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════ 3 · STIMULATION -->
+  <section class="view" id="view-2" role="tabpanel" aria-labelledby="tab-2">
+    <h1 class="h">A field far too weak to fire a cell, and it stops the seizure</h1>
+    <p class="lede">
+      Current through the scalp polarises every neuron a little, in the same direction, at the
+      same moment. It cannot make a cell fire. It does not need to.
+    </p>
+
+    <div class="rig three">
+      <div class="panel">
+        <div class="panel-head"><span class="panel-name">Current flow</span><span class="panel-units" id="f-mont">4×1 ring</span></div>
+        <div class="panel-body flush"><canvas id="cv-head" data-ar="1.5" style="aspect-ratio:1.5"></canvas></div>
+        <div class="panel-body" style="padding-top:8px">
+          <div class="btn-row">
+            <button class="btn" id="b-mont-hd" aria-pressed="true">4×1 ring</button>
+            <button class="btn" id="b-mont-pad" aria-pressed="false">Sponge pad</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><span class="panel-name">One cell in the field</span><span class="panel-units" id="f-theta">θ = 0°</span></div>
+        <div class="panel-body flush"><canvas id="cv-cell" data-ar="1.5" style="aspect-ratio:1.5"></canvas></div>
+        <div class="panel-body" style="padding-top:8px">
+          <div class="ctl-top"><span class="ctl-name">Orientation</span><span class="ctl-read" id="r-theta">0°</span></div>
+          <input type="range" id="s-theta" min="0" max="360" step="1" value="0">
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><span class="panel-name">Same field, folded cortex</span><span class="panel-units">both signs</span></div>
+        <div class="panel-body flush"><canvas id="cv-gyri" data-ar="1.5" style="aspect-ratio:1.5"></canvas></div>
+        <div class="panel-body" style="padding-top:8px">
+          <div class="readouts">
+            <div><div class="ro-label">Field</div><div class="ro-val sm" id="r-efield">0.80<span class="u">V/m</span></div></div>
+            <div><div class="ro-label">Soma shift</div><div class="ro-val sm" id="r-dvm">−0.096<span class="u">mV</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <span class="note-k">The problem the picture shows</span>
+      Cortex is folded, so one field direction hits cells at every angle. Crown, wall and fundus
+      see the same field strength and opposite signs. Some of the population you are trying to
+      quieten is being excited instead.
+    </div>
+
+    <div class="rig sheet" style="margin-top:24px">
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-name">The same patch, seizing</span>
+          <span class="panel-units" id="stim-units">stimulator off</span>
+        </div>
+        <div class="panel-body flush"><canvas id="cv-sheet3" data-ar="1.0" style="aspect-ratio:1.0"></canvas></div>
+        <div class="panel-body" style="padding-top:0">
+          <div class="legend">
+            <span class="lg"><i class="dot" style="background:#ff7e3c"></i>excitatory</span>
+            <span class="lg"><i class="dot" style="background:#4684c8"></i>inhibitory</span>
+            <span class="lg">brightness = fired just now</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <div class="panel-head"><span class="panel-name">State</span><span class="panel-units">live</span></div>
+          <div class="panel-body">
+            <p class="state" id="r-state3">Quiet</p>
+            <p class="state-sub" id="r-state3-sub">Press Trigger seizure.</p>
+            <div class="readouts" style="margin-top:14px">
+              <div><div class="ro-label">Firing rate</div><div class="ro-val" id="r-rate3">0<span class="u">Hz</span></div></div>
+              <div><div class="ro-label">Stimulator</div><div class="ro-val" id="r-bias3">0.00<span class="u">mV</span></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <div class="panel-head"><span class="panel-name">Population rate</span><span class="panel-units">Hz · 1.2 s</span></div>
+          <div class="panel-body flush"><canvas id="cv-rate3" data-ar="2.4" style="aspect-ratio:2.4"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div>
+        <div class="ctl-top"><span class="ctl-name">Stimulator</span><span class="ctl-read" id="r-bias">0.00 mV</span></div>
+        <input type="range" id="s-bias" class="hot" min="0" max="0.5" step="0.005" value="0">
+        <div class="ctl-note">Somatic polarisation delivered to the patch. Nothing below about
+          0.15; reliable by 0.25.</div>
+      </div>
+      <div>
+        <div class="ctl-top"><span class="ctl-name">Current</span><span class="ctl-read" id="r-ma">2.0 mA</span></div>
+        <input type="range" id="s-ma" min="0" max="4" step="0.1" value="2">
+        <div class="ctl-note">What the stimulator delivers at the scalp.</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn danger" id="b-seize">Trigger seizure</button>
+        <button class="btn primary" id="b-ramp">Ramp stimulator</button>
+        <button class="btn" id="b-reset3">Reset</button>
+      </div>
+    </div>
+
+    <div class="note hot">
+      <span class="note-k">The point of this tab</span>
+      Trigger the seizure, then raise the stimulator by hand. Nothing happens, nothing happens,
+      nothing happens — and then the whole thing stops at once. Turn it back down and the seizure
+      does not come back on its own.
+    </div>
+
+    <div class="note">
+      <span class="note-k">It will not behave identically every time</span>
+      Around <b>0.20 mV</b> the same setting aborts roughly half of attempts. Below 0.15 it
+      essentially never does, by 0.25 it essentially always does. That spread is not sloppiness
+      in the model, it is the phenomenon: near a tipping point the network is being pushed by
+      noise as well as by the stimulator, so whether it escapes on any given try is a matter of
+      chance. Dose sits on a probability, not on a switch.
+    </div>
+
+    <div class="rig two">
+      <div class="panel">
+        <div class="panel-head"><span class="panel-name">Why so weak a field is enough</span><span class="panel-units">three multiplications</span></div>
+        <div class="panel-body" style="font-size:13.5px;line-height:1.55;color:var(--ink-2)">
+          <p style="margin:0 0 9px"><b>It is shared.</b> The field pushes every cell the same way at
+            the same instant. Synaptic noise is independent between cells, so averaging over a
+            million neurons keeps the signal and cancels the noise.</p>
+          <p style="margin:0 0 9px"><b>The tissue is unstable.</b> Close to the tipping point, a
+            tiny nudge moves the network a long way. That is the whole reason this works, and it
+            predicts tDCS should do nothing to healthy cortex.</p>
+          <p style="margin:0"><b>It runs for half an hour.</b> Sustained polarisation also drives
+            LTD-like synaptic depression, which lowers excitability itself rather than just
+            biasing it — a lasting change, not a nudge.</p>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><span class="panel-name">As delivered</span><span class="panel-units">cathodal</span></div>
+        <div class="panel-body">
+          <table class="data">
+            <tr><th>Parameter</th><th>Typical</th></tr>
+            <tr><td>Current</td><td class="num">1–2 mA</td></tr>
+            <tr><td>Duration</td><td class="num">20–30 min</td></tr>
+            <tr><td>Sessions</td><td class="num">5–14 daily</td></tr>
+            <tr><td>Cathode</td><td class="num">over the onset zone</td></tr>
+            <tr><td>Anode</td><td class="num">contralateral supraorbital</td></tr>
+            <tr><td>Field at cortex</td><td class="num">0.4–0.8 V/m</td></tr>
+            <tr><td>Somatic shift</td><td class="num">≈ 0.05–0.1 mV</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <details class="more">
+      <summary>Under the hood, and what this leaves out</summary>
+      <div class="more-body">
+        <p>
+          The head cross-section is a real solve, not a drawing. Scalp, skull, CSF and brain get
+          their own conductivities and Laplace's equation is relaxed on a grid, then differentiated
+          to get the field. The skull is roughly eighty times more resistive than the tissue either
+          side of it, which is why the field spreads out.
+        </p>
+        <p>
+          Polarisation goes as the field strength times the cosine of the angle between the field
+          and the cell's long axis, about 0.12 mV per V/m at the soma (Bikson 2004). A cell becomes
+          a dipole: one end depolarises, the other hyperpolarises.
+        </p>
+        <p>
+          <em>Depth.</em> The commonest focal epilepsy is mesial temporal, and the hippocampus is
+          about as far from a scalp electrode as brain tissue gets.
+          <em>Geometry.</em> The folding problem above never goes away.
+          <em>Variation.</em> Skull and CSF differences move the delivered field about twofold
+          between people at identical dose.
+          <em>Evidence.</em> Cathodal tDCS over the onset zone reduces seizure frequency in
+          drug-resistant focal epilepsy — real, modest, heterogeneous, with small trials and short
+          follow-up. Interictal discharge rates fall more reliably than seizures do.
+        </p>
+        <p>
+          The stimulator slider is labelled in millivolts, but its strength is set so the collapse
+          lands mid-travel on this model. It is not a claim that 0.15 mV aborts a human seizure.
+        </p>
+      </div>
+    </details>
+  </section>
+
+</main>
+<script>
+"use strict";
+/* ============================================================================
+   PLOT — canvas primitives.
+
+   Everything on this page is drawn with these. Axes and grid follow the EEG
+   convention the page is built on: recessive hairline minors, slightly stronger
+   majors, ticks outside the frame, labels in mono.
+   ========================================================================= */
+const C = (() => {
+  const s = getComputedStyle(document.documentElement);
+  const g = n => s.getPropertyValue(n).trim();
+  return {
+    panel: g('--panel'), sunken: g('--sunken'), raised: g('--raised'),
+    ink1: g('--ink-1'), ink2: g('--ink-2'), ink3: g('--ink-3'), ink4: g('--ink-4'),
+    grid: g('--grid'), gridMaj: g('--grid-maj'), axis: g('--axis'),
+    exc: g('--exc'), inh: g('--inh'), aux: g('--aux'), trace: g('--trace'),
+    depol: g('--depol'), hyper: g('--hyper'),
+    ictal: g('--ictal'), ok: g('--ok'), warn: g('--warn'),
+    mono: g('--mono')
+  };
+})();
+
+const DPR = () => Math.min(window.devicePixelRatio || 1, 2);
+
+/**
+ * Sync a canvas backing store to the box CSS has already laid out.
+ *
+ * The element carries its own `aspect-ratio`, so the page is correctly
+ * proportioned before any script runs — a canvas with no CSS height otherwise
+ * balloons to its 300x150 intrinsic ratio scaled to full width, which is a
+ * screenful of empty box. This never writes layout, it only measures.
+ *
+ * Returns true when the size actually changed, which callers use to know that
+ * a static panel has been blanked and needs repainting.
+ */
+function fitCanvas(cv) {
+  const ar = parseFloat(cv.dataset.ar) || 2;
+  let w = cv.clientWidth;
+  let h = cv.clientHeight;
+  if (!w) w = (cv.parentElement && cv.parentElement.clientWidth) || 600;
+  if (!h) h = Math.round(w / ar);
+  const d = DPR();
+  const W = Math.max(1, Math.round(w * d)), H = Math.max(1, Math.round(h * d));
+  if (cv.width === W && cv.height === H) return false;
+  cv.width = W;
+  cv.height = H;
+  return true;
+}
+
+/** A drawing frame: data-space -> pixel-space, plus the chrome. */
+class Frame {
+  constructor(cv, opt = {}) {
+    this.cv = cv;
+    this.ctx = cv.getContext('2d');
+    this.d = DPR();
+    this.W = cv.width / this.d;
+    this.H = cv.height / this.d;
+    this.m = Object.assign({ l: 44, r: 12, t: 12, b: 26 }, opt.m || {});
+    this.xlim = opt.xlim || [0, 1];
+    this.ylim = opt.ylim || [0, 1];
+    const c = this.ctx;
+    c.setTransform(this.d, 0, 0, this.d, 0, 0);
+    c.clearRect(0, 0, this.W, this.H);
+    if (opt.bg !== false) { c.fillStyle = opt.bg || C.sunken; c.fillRect(0, 0, this.W, this.H); }
+  }
+  get x0() { return this.m.l; }
+  get x1() { return this.W - this.m.r; }
+  get y0() { return this.H - this.m.b; }
+  get y1() { return this.m.t; }
+  get pw() { return this.x1 - this.x0; }
+  get ph() { return this.y0 - this.y1; }
+
+  x(v) { return this.x0 + (v - this.xlim[0]) / (this.xlim[1] - this.xlim[0]) * this.pw; }
+  y(v) { return this.y0 - (v - this.ylim[0]) / (this.ylim[1] - this.ylim[0]) * this.ph; }
+  ix(px) { return this.xlim[0] + (px - this.x0) / this.pw * (this.xlim[1] - this.xlim[0]); }
+  iy(py) { return this.ylim[0] + (this.y0 - py) / this.ph * (this.ylim[1] - this.ylim[0]); }
+
+  clip() { const c = this.ctx; c.save(); c.beginPath(); c.rect(this.x0, this.y1, this.pw, this.ph); c.clip(); }
+  unclip() { this.ctx.restore(); }
+
+  grid(xs, ys) {
+    const c = this.ctx;
+    c.lineWidth = 1;
+    c.strokeStyle = C.grid;
+    c.beginPath();
+    (xs || []).forEach(v => { const p = Math.round(this.x(v)) + 0.5; c.moveTo(p, this.y1); c.lineTo(p, this.y0); });
+    (ys || []).forEach(v => { const p = Math.round(this.y(v)) + 0.5; c.moveTo(this.x0, p); c.lineTo(this.x1, p); });
+    c.stroke();
+  }
+
+  /** Axis frame + tick labels. ticks: [{v, t}] */
+  axes(o = {}) {
+    const c = this.ctx;
+    c.lineWidth = 1;
+    c.strokeStyle = C.axis;
+    c.beginPath();
+    c.moveTo(this.x0 + 0.5, this.y1); c.lineTo(this.x0 + 0.5, this.y0 + 0.5); c.lineTo(this.x1, this.y0 + 0.5);
+    c.stroke();
+    c.font = `10px ${C.mono}`;
+    c.fillStyle = C.ink3;
+    if (o.xticks) {
+      c.textAlign = 'center'; c.textBaseline = 'top';
+      o.xticks.forEach(t => {
+        const p = this.x(t.v);
+        if (p < this.x0 - 1 || p > this.x1 + 1) return;
+        c.strokeStyle = C.axis; c.beginPath();
+        c.moveTo(Math.round(p) + 0.5, this.y0); c.lineTo(Math.round(p) + 0.5, this.y0 + 3); c.stroke();
+        c.fillText(t.t, p, this.y0 + 6);
+      });
+    }
+    if (o.yticks) {
+      c.textAlign = 'right'; c.textBaseline = 'middle';
+      o.yticks.forEach(t => {
+        const p = this.y(t.v);
+        if (p < this.y1 - 1 || p > this.y0 + 1) return;
+        c.strokeStyle = C.axis; c.beginPath();
+        c.moveTo(this.x0 - 3, Math.round(p) + 0.5); c.lineTo(this.x0, Math.round(p) + 0.5); c.stroke();
+        c.fillText(t.t, this.x0 - 6, p);
+      });
+    }
+    if (o.xlabel) {
+      c.textAlign = 'center'; c.textBaseline = 'bottom';
+      c.fillStyle = C.ink4; c.fillText(o.xlabel, (this.x0 + this.x1) / 2, this.H - 1);
+    }
+    if (o.ylabel) {
+      c.save(); c.translate(9, (this.y0 + this.y1) / 2); c.rotate(-Math.PI / 2);
+      c.textAlign = 'center'; c.textBaseline = 'top'; c.fillStyle = C.ink4;
+      c.fillText(o.ylabel, 0, 0); c.restore();
+    }
+  }
+
+  /** Polyline through data points. pts = flat [x,y,x,y,...] or [[x,y],...] */
+  line(pts, color, w = 2, dash = null) {
+    const c = this.ctx;
+    if (!pts || pts.length < 2) return;
+    c.save();
+    c.lineWidth = w; c.strokeStyle = color;
+    c.lineJoin = 'round'; c.lineCap = 'round';
+    if (dash) c.setLineDash(dash);
+    c.beginPath();
+    const flat = typeof pts[0] === 'number';
+    const n = flat ? pts.length / 2 : pts.length;
+    let started = false;
+    for (let i = 0; i < n; i++) {
+      const xv = flat ? pts[2 * i] : pts[i][0];
+      const yv = flat ? pts[2 * i + 1] : pts[i][1];
+      if (!isFinite(xv) || !isFinite(yv)) { started = false; continue; }
+      const px = this.x(xv), py = this.y(yv);
+      if (!started) { c.moveTo(px, py); started = true; } else c.lineTo(px, py);
+    }
+    c.stroke(); c.restore();
+  }
+
+  /** Filled band between a series and a baseline. */
+  area(pts, color, base = 0) {
+    const c = this.ctx;
+    if (!pts || pts.length < 4) return;
+    const flat = typeof pts[0] === 'number';
+    const n = flat ? pts.length / 2 : pts.length;
+    c.save(); c.fillStyle = color; c.beginPath();
+    c.moveTo(this.x(flat ? pts[0] : pts[0][0]), this.y(base));
+    for (let i = 0; i < n; i++) {
+      const xv = flat ? pts[2 * i] : pts[i][0];
+      const yv = flat ? pts[2 * i + 1] : pts[i][1];
+      if (isFinite(xv) && isFinite(yv)) c.lineTo(this.x(xv), this.y(yv));
+    }
+    c.lineTo(this.x(flat ? pts[2 * (n - 1)] : pts[n - 1][0]), this.y(base));
+    c.closePath(); c.fill(); c.restore();
+  }
+
+  dot(xv, yv, color, r = 4, ring = C.sunken) {
+    const c = this.ctx;
+    c.beginPath(); c.arc(this.x(xv), this.y(yv), r + 1.4, 0, 7);
+    c.fillStyle = ring; c.fill();
+    c.beginPath(); c.arc(this.x(xv), this.y(yv), r, 0, 7);
+    c.fillStyle = color; c.fill();
+  }
+  ring(xv, yv, color, r = 4) {
+    const c = this.ctx;
+    c.beginPath(); c.arc(this.x(xv), this.y(yv), r, 0, 7);
+    c.fillStyle = C.sunken; c.fill();
+    c.lineWidth = 1.8; c.strokeStyle = color; c.stroke();
+  }
+  cross(xv, yv, color, r = 5) {
+    const c = this.ctx, px = this.x(xv), py = this.y(yv);
+    c.save(); c.lineWidth = 1.8; c.strokeStyle = color; c.lineCap = 'round';
+    c.beginPath();
+    c.moveTo(px - r, py - r); c.lineTo(px + r, py + r);
+    c.moveTo(px + r, py - r); c.lineTo(px - r, py + r);
+    c.stroke(); c.restore();
+  }
+  hline(yv, color, w = 1, dash = null) {
+    const c = this.ctx; c.save(); c.lineWidth = w; c.strokeStyle = color;
+    if (dash) c.setLineDash(dash);
+    c.beginPath(); const p = Math.round(this.y(yv)) + 0.5;
+    c.moveTo(this.x0, p); c.lineTo(this.x1, p); c.stroke(); c.restore();
+  }
+  vline(xv, color, w = 1, dash = null) {
+    const c = this.ctx; c.save(); c.lineWidth = w; c.strokeStyle = color;
+    if (dash) c.setLineDash(dash);
+    c.beginPath(); const p = Math.round(this.x(xv)) + 0.5;
+    c.moveTo(p, this.y1); c.lineTo(p, this.y0); c.stroke(); c.restore();
+  }
+  /** Shaded vertical span, in data x. */
+  vspan(xa, xb, color) {
+    const c = this.ctx; c.save(); c.fillStyle = color;
+    const a = this.x(xa), b = this.x(xb);
+    c.fillRect(Math.min(a, b), this.y1, Math.abs(b - a), this.ph); c.restore();
+  }
+  /** Text anchored in pixel space relative to the plot box. */
+  label(txt, px, py, o = {}) {
+    const c = this.ctx;
+    c.font = `${o.weight ? o.weight + ' ' : ''}${o.size || 10}px ${o.family || C.mono}`;
+    c.fillStyle = o.color || C.ink3;
+    c.textAlign = o.align || 'left';
+    c.textBaseline = o.baseline || 'top';
+    if (o.bg) {
+      const w = c.measureText(txt).width, h = (o.size || 10) + 4;
+      let bx = px - 3;
+      if (c.textAlign === 'center') bx = px - w / 2 - 3;
+      if (c.textAlign === 'right') bx = px - w - 3;
+      let by = py - 2;
+      if (c.textBaseline === 'middle') by = py - h / 2;
+      if (c.textBaseline === 'bottom') by = py - h + 1;
+      c.fillStyle = o.bg; c.fillRect(bx, by, w + 6, h);
+      c.fillStyle = o.color || C.ink3;
+    }
+    c.fillText(txt, px, py);
+  }
+  /** Text positioned in data space. */
+  labelAt(txt, xv, yv, o = {}) { this.label(txt, this.x(xv) + (o.dx || 0), this.y(yv) + (o.dy || 0), o); }
+}
+
+/** Nice tick values across [a,b]. */
+function ticks(a, b, n = 5, fmt) {
+  const span = b - a;
+  if (!(span > 0)) return [];
+  const raw = span / n;
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw / mag;
+  const step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+  const out = [];
+  const dec = Math.max(0, -Math.floor(Math.log10(step) + 1e-9));
+  for (let v = Math.ceil(a / step) * step; v <= b + step * 1e-6; v += step) {
+    const vv = Math.abs(v) < step * 1e-6 ? 0 : v;
+    out.push({ v: vv, t: fmt ? fmt(vv) : vv.toFixed(dec) });
+  }
+  return out;
+}
+const tickVals = t => t.map(o => o.v);
+
+/** Diverging blue<->red colour map through a neutral midpoint. t in [-1,1]. */
+function divergingRGB(t) {
+  t = Math.max(-1, Math.min(1, t));
+  const mid = [58, 53, 50];
+  const cool = [57, 135, 229];
+  const warm = [230, 103, 103];
+  const e = Math.sign(t) * Math.pow(Math.abs(t), 0.72);
+  const k = Math.abs(e), tgt = e < 0 ? cool : warm;
+  return [
+    Math.round(mid[0] + (tgt[0] - mid[0]) * k),
+    Math.round(mid[1] + (tgt[1] - mid[1]) * k),
+    Math.round(mid[2] + (tgt[2] - mid[2]) * k)
+  ];
+}
+const divergingCSS = t => { const c = divergingRGB(t); return `rgb(${c[0]},${c[1]},${c[2]})`; };
+
+/** Single-hue sequential ramp (blue), t in [0,1]. */
+function seqRGB(t) {
+  t = Math.max(0, Math.min(1, t));
+  const stops = [[14, 12, 11], [16, 66, 129], [37, 106, 191], [109, 167, 236], [205, 226, 251]];
+  const f = t * (stops.length - 1), i = Math.min(stops.length - 2, Math.floor(f)), k = f - i;
+  return [0, 1, 2].map(j => Math.round(stops[i][j] + (stops[i + 1][j] - stops[i][j]) * k));
+}
+
+/* Gaussian noise, Box–Muller with a cached second draw. */
+let _spare = null;
+function randn() {
+  if (_spare !== null) { const v = _spare; _spare = null; return v; }
+  let u, v, s;
+  do { u = Math.random() * 2 - 1; v = Math.random() * 2 - 1; s = u * u + v * v; } while (s >= 1 || s === 0);
+  const m = Math.sqrt(-2 * Math.log(s) / s);
+  _spare = v * m;
+  return u * m;
+}
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+/* Thousands-separated integer, thin space so it reads as one number. */
+const fmtInt = n => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u2009');
+</script>
+<script>
+"use strict";
+/* ============================================================================
+   HODGKIN–HUXLEY — squid giant axon, 1952 parameters, 6.3 °C.
+
+   Integrated by RK4. The rate functions have removable singularities at
+   V = -40 and V = -55 mV where the numerator and denominator vanish together;
+   both are guarded with their L'Hopital limits rather than an epsilon fudge.
+
+   The two conductance sliders scale gNa and gK directly, which is what a
+   sodium-channel blocker or a potassium-channel opener does to this model.
+   Every entry point takes an optional { gNa, gK } scale object; omitting it
+   means 1.0, the textbook parameters.
+   ========================================================================= */
+const HH = (() => {
+  const P = {
+    Cm: 1.0,        // uF/cm^2
+    gNa: 120, gK: 36, gL: 0.3,      // mS/cm^2
+    ENa: 50, EK: -77, EL: -54.387,  // mV
+    gIn: 0.3        // mS/cm^2 — resting input conductance, for the mV -> uA/cm^2 map
+  };
+  const VREST = -65;
+
+  // --- gating rate functions, with singularity guards ---------------------
+  function aM(V) { const d = V + 40; return Math.abs(d) < 1e-6 ? 1.0 : 0.1 * d / (1 - Math.exp(-d / 10)); }
+  function bM(V) { return 4 * Math.exp(-(V + 65) / 18); }
+  function aH(V) { return 0.07 * Math.exp(-(V + 65) / 20); }
+  function bH(V) { return 1 / (1 + Math.exp(-(V + 35) / 10)); }
+  function aN(V) { const d = V + 55; return Math.abs(d) < 1e-6 ? 0.1 : 0.01 * d / (1 - Math.exp(-d / 10)); }
+  function bN(V) { return 0.125 * Math.exp(-(V + 65) / 80); }
+
+  /** Scale factors, defaulting to the textbook conductances. */
+  const SC1 = { gNa: 1, gK: 1 };
+  const gNaOf = sc => P.gNa * ((sc || SC1).gNa ?? 1);
+  const gKOf = sc => P.gK * ((sc || SC1).gK ?? 1);
+
+  /** Steady state at rest, used for initial conditions. */
+  function rest(sc) {
+    const V = restV(sc);
+    return {
+      V,
+      m: aM(V) / (aM(V) + bM(V)),
+      h: aH(V) / (aH(V) + bH(V)),
+      n: aN(V) / (aN(V) + bN(V))
+    };
+  }
+
+  /**
+   * Resting potential for a given set of conductances. Changing gNa or gK moves
+   * where the membrane settles, so this is solved rather than assumed: bisect
+   * on total steady-state current, which is monotonic in V across this range.
+   */
+  function restV(sc) {
+    const gNa = gNaOf(sc), gK = gKOf(sc);
+    const net = V => {
+      const m = aM(V) / (aM(V) + bM(V));
+      const h = aH(V) / (aH(V) + bH(V));
+      const n = aN(V) / (aN(V) + bN(V));
+      return -gNa * m * m * m * h * (V - P.ENa)
+             - gK * n * n * n * n * (V - P.EK)
+             - P.gL * (V - P.EL);
+    };
+    let lo = -85, hi = -40;
+    if (net(lo) * net(hi) > 0) return VREST;
+    for (let k = 0; k < 60; k++) {
+      const mid = (lo + hi) / 2;
+      if (net(lo) * net(mid) <= 0) hi = mid; else lo = mid;
+    }
+    return (lo + hi) / 2;
+  }
+
+  /** Derivatives. s = [V,m,h,n]; I in uA/cm^2. Writes into out. */
+  function deriv(s, I, out, sc) {
+    const V = s[0], m = s[1], h = s[2], n = s[3];
+    const iNa = gNaOf(sc) * m * m * m * h * (V - P.ENa);
+    const iK = gKOf(sc) * n * n * n * n * (V - P.EK);
+    const iL = P.gL * (V - P.EL);
+    out[0] = (I - iNa - iK - iL) / P.Cm;
+    out[1] = aM(V) * (1 - m) - bM(V) * m;
+    out[2] = aH(V) * (1 - h) - bH(V) * h;
+    out[3] = aN(V) * (1 - n) - bN(V) * n;
+    return out;
+  }
+
+  const _k1 = new Float64Array(4), _k2 = new Float64Array(4),
+        _k3 = new Float64Array(4), _k4 = new Float64Array(4), _tmp = new Float64Array(4);
+
+  /** One RK4 step in place. s is a Float64Array [V,m,h,n]. */
+  function step(s, I, dt, sc) {
+    deriv(s, I, _k1, sc);
+    for (let i = 0; i < 4; i++) _tmp[i] = s[i] + 0.5 * dt * _k1[i];
+    deriv(_tmp, I, _k2, sc);
+    for (let i = 0; i < 4; i++) _tmp[i] = s[i] + 0.5 * dt * _k2[i];
+    deriv(_tmp, I, _k3, sc);
+    for (let i = 0; i < 4; i++) _tmp[i] = s[i] + dt * _k3[i];
+    deriv(_tmp, I, _k4, sc);
+    for (let i = 0; i < 4; i++) s[i] += dt / 6 * (_k1[i] + 2 * _k2[i] + 2 * _k3[i] + _k4[i]);
+    // gates are probabilities
+    for (let i = 1; i < 4; i++) s[i] = clamp(s[i], 0, 1);
+  }
+
+  /** Ionic currents at the current state, for the decomposition plot. */
+  function currents(s, sc) {
+    const V = s[0];
+    return {
+      na: -gNaOf(sc) * s[1] * s[1] * s[1] * s[2] * (V - P.ENa),
+      k: -gKOf(sc) * s[3] * s[3] * s[3] * s[3] * (V - P.EK),
+      l: -P.gL * (V - P.EL)
+    };
+  }
+
+  /**
+   * Steady-state firing rate at drive I, by direct simulation.
+   *
+   * Right at the onset the cell is marginal: it can fire a short burst and then
+   * fall silent, or take a long time to settle into a rhythm. A short window
+   * scores that burst as "firing", which puts the plotted threshold below the
+   * drive at which the live trace actually sustains a rhythm — the curve and
+   * the readout then disagree exactly where the interesting thing happens.
+   *
+   * So firing must be SUSTAINED to count: at least three spikes, and the last
+   * one in the final quarter of the measurement window. Anything else is a
+   * transient and returns zero, which is what the live trace reports too.
+   */
+  function rateAt(I, sc, { dt = 0.02, settle = 400, measure = 600 } = {}) {
+    const r = rest(sc);
+    const s = new Float64Array([r.V, r.m, r.h, r.n]);
+    let t = 0;
+    while (t < settle) { step(s, I, dt, sc); t += dt; }
+    let spikes = 0, prev = s[0], first = -1, last = -1;
+    t = 0;
+    while (t < measure) {
+      step(s, I, dt, sc);
+      if (prev < 0 && s[0] >= 0) {
+        spikes++;
+        if (first < 0) first = t; else last = t;
+      }
+      prev = s[0];
+      t += dt;
+    }
+    if (spikes < 3 || last <= first) return 0;
+    if (last < measure * 0.75) return 0;          // died out: not a rate
+    /* mean interval between crossings, far less quantized than a spike count */
+    return 1000 * (spikes - 1) / (last - first);
+  }
+
+  return { P, VREST, rest, restV, step, currents, rateAt, deriv };
+})();
+</script>
+<script>
+"use strict";
+/* ============================================================================
+   FIELD — quasi-static current flow and membrane polarization.
+
+   Two independent pieces:
+
+   1. A real 2D current-flow solve. Laplace's equation for a volume conductor,
+      div(sigma grad phi) = -s, relaxed by SOR on a regular grid with a
+      four-layer head (scalp / skull / CSF / brain) and insulating air outside.
+      Current enters at electrode nodes as source terms, which is the correct
+      boundary condition: no current crosses the scalp except through the pads.
+
+   2. The polarization model. A DC field polarizes a neuron as a DIPOLE, not as
+      a uniform shift: one end depolarizes, the other hyperpolarizes, and a null
+      point sits between them. Somatic polarization goes as lambda*|E|*cos(theta),
+      with theta measured from the somatodendritic axis.
+
+   Sign convention: theta = 0 means E points from soma toward the apical tip,
+   which HYPERPOLARIZES the soma. That is the cathodal case.
+   ========================================================================= */
+const Field = (() => {
+
+  // Measured constants — see the table in Step 07.
+  const LAMBDA = 0.12;        // mV per V/m, somatic (Bikson 2004)
+  const E_PER_MA = 0.4;       // V/m per mA at cortex (Huang 2017, x2 corrected)
+
+  // Tissue conductivities, S/m.
+  const SIG = { air: 0, scalp: 0.465, skull: 0.010, csf: 1.654, brain: 0.276 };
+  // Layer boundaries as a fraction of head radius.
+  const R = { scalp: 1.0, skull: 0.935, csf: 0.868, brain: 0.850 };
+
+  const N = 150;              // grid resolution
+
+  /** Build the conductivity map for a head centred in an N x N grid. */
+  function buildSigma() {
+    const sig = new Float32Array(N * N);
+    const tissue = new Uint8Array(N * N);
+    const c = (N - 1) / 2, rad = c * 0.94;
+    for (let j = 0; j < N; j++) {
+      for (let i = 0; i < N; i++) {
+        const dx = (i - c) / rad, dy = (j - c) / rad;
+        // slightly ovoid, as a head is
+        const r = Math.sqrt(dx * dx + (dy * 1.07) * (dy * 1.07));
+        let s, t;
+        if (r > R.scalp) { s = SIG.air; t = 0; }
+        else if (r > R.skull) { s = SIG.scalp; t = 1; }
+        else if (r > R.csf) { s = SIG.skull; t = 2; }
+        else if (r > R.brain) { s = SIG.csf; t = 3; }
+        else { s = SIG.brain; t = 4; }
+        sig[j * N + i] = s;
+        tissue[j * N + i] = t;
+      }
+    }
+    return { sig, tissue, c, rad };
+  }
+
+  const GEO = buildSigma();
+
+  /** Grid position of a point at angle a (radians, 0 = up) on radius fraction rf. */
+  function atAngle(a, rf) {
+    const rad = GEO.rad * rf;
+    return {
+      i: Math.round(GEO.c + Math.sin(a) * rad),
+      j: Math.round(GEO.c - Math.cos(a) * rad / 1.07)
+    };
+  }
+
+  /** Stamp a disc of current into the source array. */
+  function stamp(src, a, rf, radiusPx, amp) {
+    const p = atAngle(a, rf);
+    let n = 0;
+    const cells = [];
+    const rr = Math.ceil(radiusPx);
+    for (let dj = -rr; dj <= rr; dj++) {
+      for (let di = -rr; di <= rr; di++) {
+        if (di * di + dj * dj > radiusPx * radiusPx) continue;
+        const i = p.i + di, j = p.j + dj;
+        if (i < 1 || j < 1 || i >= N - 1 || j >= N - 1) continue;
+        if (GEO.sig[j * N + i] === 0) continue;     // must be in tissue
+        cells.push(j * N + i); n++;
+      }
+    }
+    cells.forEach(k => { src[k] += amp / n; });
+    return p;
+  }
+
+  /**
+   * Montage definitions. Angles in radians, 0 = vertex, positive = clockwise
+   * toward the right side. The focus sits at FOCUS_A.
+   */
+  const FOCUS_A = -0.55;
+  const MONTAGES = {
+    pad: {
+      label: 'Sponge pad 5x7',
+      place(src) {
+        // large cathode over focus, large anode contralateral supraorbital
+        const c = stamp(src, FOCUS_A, 0.965, 9, -1);
+        const a = stamp(src, 2.25, 0.965, 11, +1);
+        return { cathodes: [c], anodes: [a] };
+      }
+    },
+    hd: {
+      label: '4x1 HD ring',
+      place(src) {
+        // small central cathode, ring of returns close around it
+        const c = stamp(src, FOCUS_A, 0.965, 3.4, -1);
+        const anodes = [FOCUS_A - 0.45, FOCUS_A + 0.45].map(a => stamp(src, a, 0.965, 3.0, +0.5));
+        return { cathodes: [c], anodes };
+      }
+    }
+  };
+
+  /**
+   * Successive over-relaxation for the potential, as a RESUMABLE solver.
+   *
+   * The full relaxation is thousands of sweeps and takes on the order of a
+   * second. Run in one call it freezes the page, which on a slower engine
+   * looks like a hang rather than a computation. So the state lives in an
+   * object the caller advances a few sweeps at a time, between frames.
+   */
+  function beginSolve(src) {
+    const phi = new Float32Array(N * N);
+    const sig = GEO.sig;
+    /* face conductivities (harmonic mean) and their sum, precomputed once */
+    const sE = new Float32Array(N * N), sW = new Float32Array(N * N),
+          sN_ = new Float32Array(N * N), sS = new Float32Array(N * N),
+          sum = new Float32Array(N * N);
+    const hm = (a, b) => (a > 0 && b > 0) ? 2 * a * b / (a + b) : 0;
+    for (let j = 1; j < N - 1; j++) {
+      for (let i = 1; i < N - 1; i++) {
+        const k = j * N + i, s0 = sig[k];
+        if (s0 === 0) continue;
+        sE[k] = hm(s0, sig[k + 1]);
+        sW[k] = hm(s0, sig[k - 1]);
+        sS[k] = hm(s0, sig[k + N]);
+        sN_[k] = hm(s0, sig[k - N]);
+        sum[k] = sE[k] + sW[k] + sS[k] + sN_[k];
+      }
+    }
+    return { phi, src, sE, sW, sN_, sS, sum, it: 0, maxIt: 2000, residual: 1, done: false };
+  }
+
+  /** Advance a solve by `sweeps` iterations. Returns true when converged. */
+  function stepSolve(st, sweeps = 60) {
+    if (st.done) return true;
+    const { phi, src, sE, sW, sN_, sS, sum } = st;
+    const omega = 1.92;
+    for (let n = 0; n < sweeps && st.it < st.maxIt; n++, st.it++) {
+      let res = 0;
+      /* red-black ordering keeps SOR convergent and cache-friendly */
+      for (let pass = 0; pass < 2; pass++) {
+        for (let j = 1; j < N - 1; j++) {
+          for (let i = 1 + ((j + pass) & 1); i < N - 1; i += 2) {
+            const k = j * N + i;
+            if (sum[k] === 0) continue;
+            const nv = (sE[k] * phi[k + 1] + sW[k] * phi[k - 1] +
+                        sS[k] * phi[k + N] + sN_[k] * phi[k - N] + src[k]) / sum[k];
+            const d = nv - phi[k];
+            phi[k] += omega * d;
+            const ad = d < 0 ? -d : d;
+            if (ad > res) res = ad;
+          }
+        }
+      }
+      st.residual = res;
+      /* Tolerance measured, not guessed: by ~900 sweeps the cortical peak and
+         the focal area agree with a 6000-sweep solve to four significant
+         figures, and the residual plateaus near 1e-6 rather than falling
+         further, so a tighter target only burns frames. */
+      if (st.it > 60 && res < 1e-5) { st.done = true; break; }
+    }
+    if (st.it >= st.maxIt) st.done = true;
+    return st.done;
+  }
+
+  /** |E| = |-grad phi| by central differences, in grid units. */
+  function gradMag(phi) {
+    const E = new Float32Array(N * N);
+    for (let j = 1; j < N - 1; j++) {
+      for (let i = 1; i < N - 1; i++) {
+        const k = j * N + i;
+        if (GEO.sig[k] === 0) { E[k] = 0; continue; }
+        const gx = (phi[k + 1] - phi[k - 1]) * 0.5;
+        const gy = (phi[k + N] - phi[k - N]) * 0.5;
+        E[k] = Math.hypot(gx, gy);
+      }
+    }
+    return E;
+  }
+
+  const cache = {};
+
+  /**
+   * Montage solves, cached.
+   *
+   * Model units are arbitrary in 2D, so the field is CALIBRATED: the sponge-pad
+   * peak on cortex is pinned to 0.8 V/m at 2 mA, the measured value from Huang
+   * 2017. Everything else, including the HD ring, is reported against that same
+   * calibration rather than separately fitted.
+   *
+   * `begin` and `finish` bracket a resumable solve; `run` is the blocking
+   * convenience form, used only off the render path.
+   */
+  const pending = {};
+
+  function begin(name) {
+    if (cache[name]) return null;
+    if (pending[name]) return pending[name];
+    const src = new Float32Array(N * N);
+    const el = MONTAGES[name].place(src);
+    const st = beginSolve(src);
+    st.name = name; st.el = el;
+    pending[name] = st;
+    return st;
+  }
+
+  function finish(st) {
+    const E = gradMag(st.phi);
+    /* cortical band = brain tissue within ~5 grid cells of the CSF boundary */
+    const band = [];
+    for (let j = 1; j < N - 1; j++) {
+      for (let i = 1; i < N - 1; i++) {
+        const k = j * N + i;
+        if (GEO.tissue[k] !== 4) continue;
+        const dx = (i - GEO.c) / GEO.rad, dy = ((j - GEO.c) / GEO.rad) * 1.07;
+        if (Math.sqrt(dx * dx + dy * dy) > R.brain - 0.055) band.push(k);
+      }
+    }
+    let peak = 0;
+    band.forEach(k => { if (E[k] > peak) peak = E[k]; });
+    const above = band.filter(k => E[k] > 0.5 * peak).length;
+    let sumIn = 0;
+    for (let k = 0; k < st.src.length; k++) if (st.src[k] > 0) sumIn += st.src[k];
+
+    const out = {
+      name: st.name, phi: st.phi, E, el: st.el, band,
+      peakRaw: peak, aboveHalf: above, residual: st.residual, iters: st.it, sumIn
+    };
+    cache[st.name] = out;
+    delete pending[st.name];
+    return out;
+  }
+
+  /** Blocking solve, for callers not on the render path. */
+  function run(name) {
+    if (cache[name]) return cache[name];
+    const st = begin(name);
+    while (!stepSolve(st, 200)) { /* spin to convergence */ }
+    return finish(st);
+  }
+
+  const ready = name => !!cache[name];
+
+  /** Calibration factor, fixed by the pad montage. */
+  let _calib = null;
+  function calibration() {
+    if (_calib === null) _calib = 0.8 / run('pad').peakRaw;   // V/m per model unit @ 2 mA
+    return _calib;
+  }
+  /** Peak cortical field for a montage, V/m, at a given current. */
+  function peakField(name, mA) { return run(name).peakRaw * calibration() * (mA / 2); }
+  /** Cortical area above half peak, in cm^2 (grid calibrated to a 17 cm head). */
+  function focalArea(name) {
+    const cmPerCell = 17 / (2 * GEO.rad);
+    return run(name).aboveHalf * cmPerCell * cmPerCell;
+  }
+
+  // ---------------------------------------------------------------- cells --
+  /** Field magnitude at cortex for a delivered current, V/m. */
+  const eField = mA => E_PER_MA * mA;
+
+  /** Somatic polarization, mV. theta in radians from the somatodendritic axis. */
+  const somaticDV = (mA, theta) => -LAMBDA * eField(mA) * Math.cos(theta);
+
+  /**
+   * Polarization profile along the cell, x from -1 (soma) to +1 (apical tip).
+   * A passive cable in a uniform field polarizes antisymmetrically about its
+   * midpoint; tanh gives the right shape — saturating at the sealed ends, with
+   * a null in between — normalized so x = -1 reproduces somaticDV exactly.
+   */
+  function profileDV(mA, theta, x) {
+    const k = 2.0;
+    const g = -Math.tanh(k * x) / Math.tanh(k);
+    return -LAMBDA * eField(mA) * Math.cos(theta) * g;
+  }
+
+  return {
+    LAMBDA, E_PER_MA, N, GEO, MONTAGES, FOCUS_A, SIG, R,
+    run, begin, finish, stepSolve, ready,
+    peakField, focalArea, calibration, atAngle,
+    eField, somaticDV, profileDV
+  };
+})();
+</script>
+<script>
+"use strict";
+/* ============================================================================
+   SHEET — a spiking network laid out as a patch of cortex.
+
+   Izhikevich neurons on a 2D sheet. Unlike a randomly wired network, a cell
+   here connects mostly to its NEIGHBOURS, with a small fraction of long-range
+   axons. That single change is what lets the model show the thing that matters:
+   activity PROPAGATES. Poke one spot and you watch a wave either die out, or
+   travel, or take over the sheet — which is the difference between noise and a
+   network state, and it is not visible in a randomly wired model where every
+   cell is everyone's neighbour.
+
+   Two knobs move it between regimes:
+     gEE — recurrent excitatory gain
+     gI  — inhibitory gain
+   Below threshold a poke fades within a few millimetres. Near threshold it
+   travels a long way and still stops. Above it, the patch latches into
+   sustained high-rate firing and stays there with nothing driving it.
+
+   The latch has a mechanism rather than a tuning: activity-dependent chloride
+   loading. Intense firing loads intracellular chloride faster than KCC2 clears
+   it, the GABA_A reversal drifts depolarized, and inhibition loses grip. More
+   firing weakens inhibition, which permits more firing. That is the documented
+   route to ictal inhibitory failure (Cohen/Miles, Huberfeld) and it is what
+   gives this sheet a second stable state.
+
+   The stimulator enters where it does in life: a small constant hyperpolarizing
+   current on the excitatory cells only, scaled per cell by its own cos(theta),
+   so cells pointing the wrong way are depolarized instead.
+
+   Parameters are chosen so the transitions are LEGIBLE on screen, not so that
+   any single number matches a measurement.
+   ========================================================================= */
+const Sheet = (() => {
+  const GW = 50, GH = 50;                 // sheet geometry
+  const N = GW * GH;                      // 2500 cells
+  const NE = Math.round(N * 0.8);         // 2000 excitatory
+  const NI = N - NE;                      // 500 inhibitory
+  const DT = 0.5;                         // ms
+
+  const SIGMA = 2.6;                      // connection kernel width, in cells
+  const P_LONG = 0.05;                    // fraction of synapses that are long-range
+  const K_IN = 90;                        // mean in-degree
+
+  /* Stimulator units. One constant, so the mV label on the slider and the
+     current the cells feel are related by exactly one number. Set so the abort
+     lands mid-slider, per the note in README: legibility over calibration. */
+  const UNITS_PER_MV = 4.0;
+
+  const v = new Float32Array(N), u = new Float32Array(N);
+  const pa = new Float32Array(N), pb = new Float32Array(N),
+        pc = new Float32Array(N), pd = new Float32Array(N);
+  const xE = new Float32Array(N), xI = new Float32Array(N);
+  const cosT = new Float32Array(N);       // dendritic orientation, E cells only
+  const fired = new Int32Array(N);
+  const gx = new Int16Array(N), gy = new Int16Array(N);
+  const act = new Float32Array(N);        // recent-activity trace, for the patch
+  const isEx = new Uint8Array(N);
+
+  let rowStart, target, weightScale;      // CSR, indexed by presynaptic cell
+  let nFired = 0, t = 0, baseCos = 1;
+
+  const cfg = {
+    wEE: 0.30, wEI: 0.85, wIE: 0.42, wII: 0.60,
+    gEE: 1.0, gI: 1.0,
+    bg: 3.8, bgSigma: 2.6,
+    bias: 0, cosMean: 0.62
+  };
+
+  /* Chloride loading — the inhibitory-failure feedback loop. */
+  const CL = { r0: 15, gain: 1.667e-4, tau: 400, depth: 0.60 };
+  let cl = 0;
+
+  /* history ring buffers */
+  const HIST = 2400;                      // 1.2 s at 0.5 ms
+  const hE = new Float32Array(HIST), hI = new Float32Array(HIST), hL = new Float32Array(HIST);
+  let hp = 0, hn = 0;
+  let lfpLP = 0;
+
+  /* raster ring */
+  const RMAX = 60000;
+  const rT = new Float32Array(RMAX), rId = new Int32Array(RMAX);
+  let rp = 0, rn = 0;
+
+  function seedRand(s) {
+    let x = s >>> 0;
+    return () => (x ^= x << 13, x ^= x >>> 17, x ^= x << 5, (x >>> 0) / 4294967296);
+  }
+
+  function build(seed = 20260903) {
+    const R = seedRand(seed);
+
+    /* Lay the cells on the sheet in a shuffled order, so excitatory and
+       inhibitory cells are interleaved in space rather than in two blocks. */
+    const perm = new Int32Array(N);
+    for (let i = 0; i < N; i++) perm[i] = i;
+    for (let i = N - 1; i > 0; i--) {
+      const j = (R() * (i + 1)) | 0;
+      const tmp = perm[i]; perm[i] = perm[j]; perm[j] = tmp;
+    }
+    for (let i = 0; i < N; i++) { gx[i] = perm[i] % GW; gy[i] = (perm[i] / GW) | 0; }
+
+    for (let i = 0; i < N; i++) {
+      isEx[i] = i < NE ? 1 : 0;
+      if (i < NE) {
+        const r = R(), r2 = r * r;
+        pa[i] = 0.02; pb[i] = 0.2; pc[i] = -65 + 15 * r2; pd[i] = 8 - 6 * r2;
+        /* Orientation spread of a folded cortex: most cells reasonably aligned,
+           a real minority pointing the wrong way. */
+        cosT[i] = clamp(1 - 2.1 * R() * R(), -1, 1);
+      } else {
+        const r = R();
+        pa[i] = 0.02 + 0.08 * r; pb[i] = 0.25 - 0.05 * r; pc[i] = -65; pd[i] = 2;
+      }
+      v[i] = -65 + 5 * (R() - 0.5); u[i] = pb[i] * v[i];
+    }
+
+    /* Distance-dependent connectivity. Built as in-lists (which cells feed
+       cell j) so every cell gets the same expected in-degree regardless of
+       where it sits, then transposed to CSR-by-presynaptic for propagation.
+       Only cells within CUT are considered, which keeps the build O(N * area)
+       instead of O(N^2). */
+    const s2 = 2 * SIGMA * SIGMA;
+    const CUT = Math.ceil(SIGMA * 3.2);
+    const nLocal = K_IN * (1 - P_LONG), nLong = K_IN * P_LONG;
+
+    /* index of the cell occupying each grid site, for neighbourhood lookup */
+    const at = new Int32Array(N);
+    for (let i = 0; i < N; i++) at[gy[i] * GW + gx[i]] = i;
+
+    const byPre = new Array(N);
+    for (let i = 0; i < N; i++) byPre[i] = [];
+    let total = 0;
+
+    for (let j = 0; j < N; j++) {
+      const jx = gx[j], jy = gy[j];
+      /* local: normalise the kernel over the cells actually in range */
+      let sum = 0;
+      const cand = [], kv = [];
+      for (let dy = -CUT; dy <= CUT; dy++) {
+        const yy = jy + dy;
+        if (yy < 0 || yy >= GH) continue;
+        for (let dx = -CUT; dx <= CUT; dx++) {
+          const xx = jx + dx;
+          if (xx < 0 || xx >= GW) continue;
+          if (dx === 0 && dy === 0) continue;
+          const w = Math.exp(-(dx * dx + dy * dy) / s2);
+          cand.push(at[yy * GW + xx]); kv.push(w); sum += w;
+        }
+      }
+      for (let k = 0; k < cand.length; k++) {
+        if (R() < nLocal * kv[k] / sum) { byPre[cand[k]].push(j); total++; }
+      }
+      /* long-range: a few axons from anywhere on the sheet */
+      const nl = Math.round(nLong + (R() < (nLong % 1) ? 1 : 0));
+      for (let k = 0; k < nl; k++) {
+        const i = (R() * N) | 0;
+        if (i !== j) { byPre[i].push(j); total++; }
+      }
+    }
+
+    rowStart = new Int32Array(N + 1);
+    target = new Int32Array(total);
+    weightScale = new Float32Array(total);
+    let k = 0;
+    for (let i = 0; i < N; i++) {
+      rowStart[i] = k;
+      const row = byPre[i];
+      for (let q = 0; q < row.length; q++) {
+        target[k] = row[q];
+        weightScale[k] = 0.8 + 0.4 * R();
+        k++;
+      }
+    }
+    rowStart[N] = k;
+
+    let cs = 0;
+    for (let i = 0; i < NE; i++) cs += cosT[i];
+    baseCos = cs / NE;
+    return total;
+  }
+  const nSyn = build();
+
+  function reset(hard = true) {
+    const R = seedRand(4242);
+    for (let i = 0; i < N; i++) {
+      v[i] = -65 + 5 * (R() - 0.5); u[i] = pb[i] * v[i];
+      xE[i] = 0; xI[i] = 0; act[i] = 0;
+    }
+    if (hard) { hp = 0; hn = 0; rp = 0; rn = 0; t = 0; }
+    lastPoke = { x: GW / 2, y: GH / 2, r: 0 };
+    kickLeft = 0; kickMask.fill(0);
+    lfpLP = 0; cl = 0;
+  }
+
+  const decE = Math.exp(-DT / 5), decI = Math.exp(-DT / 10);
+
+  /* A poke: a disc of excitatory cells driven hard for a few ms. */
+  const kickMask = new Uint8Array(N);
+  let kickLeft = 0, kickStrength = 30;
+  let lastPoke = { x: GW / 2, y: GH / 2, r: 0 };   // r = 0 until actually poked
+  function poke(x = GW / 2, y = GH / 2, r = 5, strength = 30, ms = 15) {
+    lastPoke = { x, y, r };
+    kickLeft = ms; kickStrength = strength;
+    for (let i = 0; i < N; i++) {
+      const dx = gx[i] - x, dy = gy[i] - y;
+      kickMask[i] = (i < NE && dx * dx + dy * dy <= r * r) ? 1 : 0;
+    }
+  }
+
+  /** One 0.5 ms step. */
+  function step() {
+    const { gEE, gI, wEE, wEI, wIE, wII, bg, bgSigma, bias, cosMean } = cfg;
+    const biasUnits = bias * UNITS_PER_MV;
+    const cosScale = cosMean / baseCos;
+    nFired = 0;
+
+    for (let i = 0; i < N; i++) {
+      let I = bg + bgSigma * randn() + xE[i] - xI[i];
+      if (i < NE) {
+        if (biasUnits !== 0) I -= biasUnits * cosT[i] * cosScale;
+        if (kickLeft > 0 && kickMask[i]) I += kickStrength;
+      }
+      /* two half-steps for stability at dt = 0.5 ms */
+      let vi = v[i], ui = u[i];
+      vi += 0.5 * (0.04 * vi * vi + 5 * vi + 140 - ui + I);
+      vi += 0.5 * (0.04 * vi * vi + 5 * vi + 140 - ui + I);
+      ui += pa[i] * (pb[i] * vi - ui);
+      if (!isFinite(vi) || vi >= 30) {
+        fired[nFired++] = i;
+        vi = pc[i]; ui = ui + pd[i];
+        act[i] = 1;
+      }
+      v[i] = vi; u[i] = ui;
+    }
+    if (kickLeft > 0) kickLeft -= DT;
+
+    for (let i = 0; i < N; i++) { xE[i] *= decE; xI[i] *= decI; act[i] *= 0.94; }
+
+    const gIeff = gI * (1 - CL.depth * cl);
+    let nEf = 0, nIf = 0, synDrive = 0;
+    for (let s = 0; s < nFired; s++) {
+      const j = fired[s];
+      const pre = j < NE;
+      if (pre) nEf++; else nIf++;
+      const a = rowStart[j], b = rowStart[j + 1];
+      for (let k = a; k < b; k++) {
+        const i = target[k], w = weightScale[k];
+        if (pre) {
+          const g = (i < NE ? wEE * gEE : wIE);
+          xE[i] += g * w;
+          if (i < NE) synDrive += g * w;
+        } else {
+          const g = (i < NE ? wEI : wII) * gIeff;
+          xI[i] += g * w;
+          if (i < NE) synDrive -= g * w;
+        }
+      }
+      if (rn < RMAX) rn++;
+      rT[rp] = t; rId[rp] = j; rp = (rp + 1) % RMAX;
+    }
+
+    lfpLP += (synDrive - lfpLP) * 0.12;
+
+    const rateE = nEf / NE / (DT / 1000);
+    const rateI = nIf / NI / (DT / 1000);
+
+    const drive = Math.max(0, rateE - CL.r0) * CL.gain;
+    cl += DT * (drive * (1 - cl) - cl / CL.tau);
+    cl = clamp(cl, 0, 1);
+
+    hE[hp] = rateE; hI[hp] = rateI; hL[hp] = lfpLP;
+    hp = (hp + 1) % HIST; if (hn < HIST) hn++;
+    t += DT;
+    return { rateE, rateI, nFired };
+  }
+
+  /** Smoothed population rates over the last `ms`. */
+  function recent(ms = 100) {
+    const n = Math.min(hn, Math.round(ms / DT));
+    let se = 0, si = 0;
+    for (let k = 0; k < n; k++) {
+      const idx = (hp - 1 - k + HIST * 2) % HIST;
+      se += hE[idx]; si += hI[idx];
+    }
+    return n ? { E: se / n, I: si / n } : { E: 0, I: 0 };
+  }
+
+  /**
+   * How far the current activity has spread from the last poke, and how much
+   * of the sheet it covers. This is the readout that separates "a few cells
+   * fired" from "the patch is recruited".
+   */
+  function spread() {
+    let n = 0, far = 0;
+    for (let i = 0; i < NE; i++) {
+      if (act[i] < 0.35) continue;
+      n++;
+      const d = Math.hypot(gx[i] - lastPoke.x, gy[i] - lastPoke.y);
+      if (d > far) far = d;
+    }
+    return { frac: n / NE, reach: far / Math.hypot(GW, GH) };
+  }
+
+  /** Fraction of excitatory cells recently active — the "recruited" measure. */
+  function recruited() {
+    let n = 0;
+    for (let i = 0; i < NE; i++) if (act[i] > 0.35) n++;
+    return n / NE;
+  }
+
+  const isIctal = () => recent(200).E > 25;
+
+  return {
+    N, NE, NI, GW, GH, DT, HIST, UNITS_PER_MV, nSyn, cfg, CL,
+    gx, gy, act, cosT, isEx,
+    get baseCos() { return baseCos; },
+    get chloride() { return cl; },
+    get t() { return t; },
+    get poked() { return lastPoke; },
+    step, reset, poke, recent, spread, recruited, isIctal,
+    hist: { E: hE, I: hI, L: hL, get p() { return hp; }, get n() { return hn; } },
+    raster: { T: rT, ID: rId, get p() { return rp; }, get n() { return rn; }, MAX: RMAX }
+  };
+})();
+</script>
+<script>
+"use strict";
+/* ============================================================================
+   70-app — rendering, wiring, and the tab router.
+
+   Everything above this file is numerics with no opinion about the screen.
+   This file owns the three tab modules, one requestAnimationFrame loop, and
+   the slider wiring.
+
+   Each tab is an object with the same shape:
+
+       { cvs, init(), enter(), exit(), update(dtMs), draw() }
+
+   `update` advances simulation state by wall-clock dt; `draw` repaints. Only
+   the active tab ticks. The sheet is a singleton shared by tabs 2 and 3, and
+   each reconfigures it on entry so a tab always shows what it claims to.
+
+   Long computations (the firing-rate sweep, the Laplace solves) run chunked
+   across frames through `Job`, so the page never blocks.
+   ========================================================================= */
+
+const App = (() => {
+
+  const $ = id => document.getElementById(id);
+  const on = (id, ev, fn) => { const e = $(id); if (e) e.addEventListener(ev, fn); };
+  const txt = (id, s) => { const e = $(id); if (e) e.textContent = s; };
+  /* A readout is "<value><span class=u>unit</span>"; only the value changes. */
+  const val = (id, s) => { const e = $(id); if (e && e.firstChild) e.firstChild.nodeValue = s; };
+  const deg = String.fromCharCode(176);
+
+  /* ------------------------------------------------------------------ jobs --
+     A chunked computation: ~8 ms of work per frame, so animated panels beside
+     it keep their cadence. */
+  class Job {
+    constructor(n, work, done) { this.i = 0; this.n = n; this.work = work; this.done = done; this.dead = false; }
+    get progress() { return this.n ? this.i / this.n : 1; }
+    tick(budgetMs = 8) {
+      if (this.dead) return true;
+      const t0 = performance.now();
+      while (this.i < this.n && performance.now() - t0 < budgetMs) this.work(this.i++);
+      if (this.i >= this.n) { this.dead = true; if (this.done) this.done(); return true; }
+      return false;
+    }
+  }
+  const jobs = new Set();
+  const runJob = j => { jobs.add(j); return j; };
+
+  /* ----------------------------------------------------------------- clock --
+     Nothing here is watchable at life speed. An action potential is 2 ms wide
+     and a wave crosses the patch in about 30 ms — one or two frames. So model
+     time is decoupled from wall clock and the ratio is a control the speaker
+     drives, shown on screen so the timebase is never ambiguous.
+
+     `take` converts one frame of wall clock into model milliseconds, carrying
+     the fraction across frames so that even 1/250 speed advances smoothly
+     instead of quantising to whole integration steps. */
+  const Clock = (() => {
+    let speed = 0.02, paused = false, carry = 0, model = 0;
+    return {
+      get speed() { return speed; },
+      get paused() { return paused; },
+      get model() { return model; },
+      set(sp) {
+        speed = sp; carry = 0;
+        document.querySelectorAll('.sp').forEach(b =>
+          b.setAttribute('aria-pressed', String(Math.abs(parseFloat(b.dataset.speed) - sp) < 1e-9)));
+      },
+      pause(on) {
+        paused = on === undefined ? !paused : on;
+        const b = $('b-pause');
+        if (b) { b.textContent = paused ? 'Play' : 'Pause'; b.setAttribute('aria-pressed', String(paused)); }
+      },
+      /** Model ms to advance for this frame; 0 while paused. */
+      take(dtMs) {
+        if (paused) return 0;
+        const want = Math.min(60, dtMs) * speed + carry;
+        return want;
+      },
+      /** Report back what was actually consumed, so the remainder carries. */
+      used(want, actual) { carry = Math.max(0, want - actual); model += actual; },
+      reset() { model = 0; carry = 0; },
+      label() {
+        const m = model;
+        return (m < 1000 ? m.toFixed(m < 10 ? 2 : 0) + ' ms' : (m / 1000).toFixed(2) + ' s');
+      }
+    };
+  })();
+
+  /* ================================================================== tab 01
+     Hodgkin-Huxley, as a parameter toy. Runs at about half real time because a
+     real action potential is 2 ms wide and unwatchable at 1x.
+     ====================================================================== */
+  const T1 = (() => {
+    const WIN = 60;              // ms of trace on screen
+    const DT = 0.01;             // integration step, ms
+    const KEEP = 2;              // store every 2nd step
+    const CAP = Math.round(WIN / (DT * KEEP)) + 16;
+
+    const bT = new Float32Array(CAP), bV = new Float32Array(CAP);
+    const bNa = new Float32Array(CAP), bK = new Float32Array(CAP), bL = new Float32Array(CAP);
+    let p = 0, n = 0;
+
+    let s = null, t = 0, keepC = 0, pulseLeft = 0;
+    let wasAbove = false;
+
+    /* Spike shape, measured off the live trace at each spike. */
+    let lastAmp = null, lastWidth = null;
+    let peakV = -100, crossUp = null;
+
+    /* Control state: the drive, and the two conductance scale factors. */
+    let iext = 8, gNaScale = 1, gKScale = 1;
+    let dirtyFI = true;
+    const scales = () => ({ gNa: gNaScale, gK: gKScale });
+
+    /** Re-seed the membrane at the resting point for the current conductances. */
+    function reset() {
+      const r = HH.rest(scales());
+      s = new Float64Array([r.V, r.m, r.h, r.n]);
+      t = 0; p = 0; n = 0; keepC = 0; pulseLeft = 0;
+      wasAbove = false;
+      lastAmp = null; lastWidth = null; peakV = -100; crossUp = null;
+    }
+
+    /* Firing-rate curve, re-measured whenever a conductance moves, because
+       changing gNa or gK genuinely changes the curve rather than shifting it.
+
+       Sampling alone is not enough. The onset is a true discontinuity, so a
+       curve drawn from a regular grid puts the cliff at whichever sample
+       happens to be first above threshold, and interpolating across it reports
+       a firing rate for a cell that is actually silent. The threshold is
+       therefore bisected and spliced in, so the drawn curve, the reported
+       threshold and the live trace all agree. */
+    const FI_LO = 0, FI_HI = 20, FI_STEP = 0.25;
+    const fiN = Math.round((FI_HI - FI_LO) / FI_STEP) + 1;
+    let curve = null, refCurve = null;
+    let rheobase = null, fiJob = null, refReady = false;
+
+    /** Sweep, then splice the measured threshold into the sampled curve. */
+    function sweep(sc, done) {
+      const pts = new Array(fiN);
+      return new Job(fiN,
+        i => { const I = FI_LO + i * FI_STEP; pts[i] = [I, HH.rateAt(I, sc)]; },
+        () => {
+          let a = null, b = null;
+          for (let i = 0; i < fiN; i++) {
+            if (pts[i][1] > 0) { b = pts[i][0]; a = i ? pts[i - 1][0] : FI_LO; break; }
+          }
+          let rh = null;
+          if (b !== null) {
+            for (let k = 0; k < 24; k++) {
+              const m = (a + b) / 2;
+              if (HH.rateAt(m, sc) > 0) b = m; else a = m;
+            }
+            rh = b;                       // first drive that fires
+          }
+          const draw = [], firing = [];
+          if (rh === null) {
+            pts.forEach(q => draw.push([q[0], 0]));
+          } else {
+            pts.forEach(q => { if (q[0] < rh) draw.push([q[0], 0]); });
+            const onset = HH.rateAt(rh, sc);
+            draw.push([rh, 0]);           // the cliff, at the real threshold
+            draw.push([rh, onset]);
+            firing.push([rh, onset]);
+            pts.forEach(q => { if (q[0] > rh) { draw.push(q); firing.push(q); } });
+          }
+          done({ draw, firing, rh });
+        });
+    }
+
+    function startFI(isRef) {
+      if (fiJob) { fiJob.dead = true; jobs.delete(fiJob); fiJob = null; }
+      if (isRef) {
+        fiJob = runJob(sweep({ gNa: 1, gK: 1 }, res => {
+          refCurve = res; refReady = true; fiJob = null; startFI(false);
+        }));
+        return;
+      }
+      curve = null;
+      fiJob = runJob(sweep(scales(), res => {
+        curve = res; rheobase = res.rh; fiJob = null; dirtyFI = true;
+        val('r-rheo', rheobase === null ? '—' : rheobase.toFixed(1));
+      }));
+    }
+
+    /**
+     * Rate the curve gives at drive I: the y-value of the plotted line at x=I.
+     * Silent below threshold, with no interpolation across the discontinuity.
+     * The operating point and the firing-rate readout both come from here, so
+     * the dot sits on the drawn curve by construction.
+     */
+    function fiAt(I) {
+      if (!curve) return 0;
+      const { firing, rh } = curve;
+      if (rh === null || I < rh) return 0;
+      if (!firing.length) return 0;
+      if (I <= firing[0][0]) return firing[0][1];
+      const last = firing[firing.length - 1];
+      if (I >= last[0]) return last[1];
+      for (let k = 0; k < firing.length - 1; k++) {
+        const [x0, y0] = firing[k], [x1, y1] = firing[k + 1];
+        if (I >= x0 && I <= x1) {
+          const u = x1 > x0 ? (I - x0) / (x1 - x0) : 0;
+          return y0 + (y1 - y0) * u;
+        }
+      }
+      return last[1];
+    }
+
+    function update(dtMs) {
+      if (!s) reset();
+      const sc = scales();
+      const want = Clock.take(dtMs);
+      let acc = 0;
+      while (acc < want) {
+        let I = iext;
+        if (pulseLeft > 0) { I += 20; pulseLeft -= DT; }
+        HH.step(s, I, DT, sc);
+        t += DT; acc += DT;
+
+        /* spike detection and shape, measured at half-height on the way down */
+        const V = s[0];
+        if (!wasAbove && V >= 0) {
+          wasAbove = true; peakV = V; crossUp = t;
+        } else if (wasAbove) {
+          if (V > peakV) peakV = V;
+          if (V < -10) {
+            wasAbove = false;
+            if (crossUp !== null) {
+              lastAmp = peakV - HH.restV(sc);
+              lastWidth = t - crossUp;
+            }
+            peakV = -100; crossUp = null;
+          }
+        }
+
+        if (++keepC >= KEEP) {
+          keepC = 0;
+          const c = HH.currents(s, sc);
+          bT[p] = t; bV[p] = s[0];
+          bNa[p] = c.na; bK[p] = c.k; bL[p] = c.l;
+          p = (p + 1) % CAP; if (n < CAP) n++;
+        }
+      }
+      Clock.used(want, acc);
+    }
+
+    function series(buf) {
+      const out = new Float64Array(n * 2);
+      let k = 0;
+      for (let j = 0; j < n; j++) {
+        const idx = (p - n + j + CAP * 2) % CAP;
+        out[k++] = bT[idx]; out[k++] = buf[idx];
+      }
+      return out;
+    }
+
+    function drawV() {
+      const cv = $('cv-v'); if (!cv) return;
+      const f = new Frame(cv, { xlim: [t - WIN, t], ylim: [-95, 60], m: { l: 46, r: 14, t: 12, b: 24 } });
+      const yt = ticks(-95, 60, 5);
+      f.grid(null, tickVals(yt));
+      const vr = HH.restV(scales());
+      f.hline(vr, C.grid, 1, [3, 4]);
+      f.hline(0, C.axis, 1);
+      f.clip();
+      f.line(series(bV), C.trace, 1.8);
+      f.unclip();
+      f.axes({ yticks: yt, xticks: ticks(t - WIN, t, 6, v => v.toFixed(0)) });
+      f.labelAt('rest ' + vr.toFixed(0), t - WIN, vr, { dx: 6, dy: -3, baseline: 'bottom', color: C.ink4, size: 9 });
+      f.label('mV', f.x0 - 40, f.y1 + 2, { color: C.ink4, size: 9 });
+    }
+
+    function drawCurrents() {
+      const cv = $('cv-i'); if (!cv) return;
+      const f = new Frame(cv, { xlim: [t - WIN, t], ylim: [-900, 520], m: { l: 46, r: 10, t: 10, b: 22 } });
+      const yt = ticks(-900, 520, 4);
+      f.grid(null, tickVals(yt));
+      f.clip();
+      /* signed areas: inward sodium below the line, outward potassium above */
+      f.area(series(bNa), 'rgba(217, 89, 38, 0.30)', 0);
+      f.area(series(bK), 'rgba(57, 135, 229, 0.30)', 0);
+      f.line(series(bNa), C.exc, 1.3);
+      f.line(series(bK), C.inh, 1.3);
+      f.line(series(bL), C.ink4, 1.1);
+      f.unclip();
+      f.hline(0, C.axis, 1);
+      f.axes({ yticks: yt, xticks: ticks(t - WIN, t, 4, v => v.toFixed(0)) });
+      f.label('in', f.x0 + 6, f.y(-760), { color: C.ink4, size: 9 });
+      f.label('out', f.x0 + 6, f.y(430), { color: C.ink4, size: 9 });
+    }
+
+    function drawFI() {
+      const cv = $('cv-fi'); if (!cv) return;
+      const f = new Frame(cv, { xlim: [FI_LO, FI_HI], ylim: [0, 140], m: { l: 44, r: 12, t: 14, b: 34 } });
+      const xt = ticks(FI_LO, FI_HI, 5), yt = ticks(0, 140, 4);
+      f.grid(tickVals(xt), tickVals(yt));
+
+      if (!curve) {
+        f.axes({ xticks: xt, yticks: yt, xlabel: 'drive  µA/cm²', ylabel: 'Hz' });
+        const pr = fiJob ? fiJob.progress : 0;
+        f.label('measuring… ' + Math.round(pr * 100) + '%',
+          (f.x0 + f.x1) / 2, (f.y0 + f.y1) / 2, { align: 'center', baseline: 'middle', color: C.ink3, size: 11 });
+        return;
+      }
+
+      const changed = Math.abs(gNaScale - 1) > 1e-6 || Math.abs(gKScale - 1) > 1e-6;
+      f.clip();
+      if (refReady && refCurve && changed) f.line(refCurve.draw, C.ink4, 1.4);
+      f.line(curve.draw, changed ? C.exc : C.ink3, 1.9);
+      f.unclip();
+
+      if (rheobase !== null) {
+        f.vline(rheobase, C.ink4, 1, [3, 4]);
+        f.labelAt('threshold ' + rheobase.toFixed(1), rheobase, 132,
+          { dx: 5, color: C.ink4, size: 9, bg: C.sunken });
+      }
+      /* The operating point is the curve's own value at the current drive,
+         so the dot rides the plotted line as the slider moves. */
+      f.dot(iext, fiAt(iext), C.trace, 4);
+      f.axes({ xticks: xt, yticks: yt, xlabel: 'drive  µA/cm²', ylabel: 'Hz' });
+      if (rheobase === null) {
+        f.label('silent at every drive', (f.x0 + f.x1) / 2, f.y1 + 16,
+          { align: 'center', color: C.ictal, size: 10 });
+      }
+    }
+
+    function readouts() {
+      /* Modelled rate, from the same curve the dot sits on, so the readout and
+         the plot cannot disagree. Blank while the curve is being re-measured. */
+      val('r-rate', curve ? fiAt(iext).toFixed(0) : '—');
+      val('r-amp', lastAmp === null ? '—' : lastAmp.toFixed(0));
+      val('r-width', lastWidth === null ? '—' : lastWidth.toFixed(2));
+    }
+
+    return {
+      cvs: ['cv-v', 'cv-i', 'cv-fi'],
+      init() {
+        const si = $('s-iext'), sna = $('s-gna'), sk = $('s-gk');
+        iext = parseFloat(si.value);
+        gNaScale = parseFloat(sna.value) / 100;
+        gKScale = parseFloat(sk.value) / 100;
+        si.addEventListener('input', () => {
+          iext = parseFloat(si.value);
+          txt('r-iext', iext.toFixed(1) + ' µA/cm²');
+          dirtyFI = true;
+        });
+        const onCond = () => {
+          gNaScale = parseFloat(sna.value) / 100;
+          gKScale = parseFloat(sk.value) / 100;
+          txt('r-gna', sna.value + '%');
+          txt('r-gk', sk.value + '%');
+          reset();
+          startFI(false);
+        };
+        sna.addEventListener('input', onCond);
+        sk.addEventListener('input', onCond);
+        on('b-pulse', 'click', () => { pulseLeft = 1.0; });
+        on('b-reset', 'click', () => reset());
+        txt('r-iext', iext.toFixed(1) + ' µA/cm²');
+        txt('r-gna', sna.value + '%');
+        txt('r-gk', sk.value + '%');
+        reset();
+      },
+      enter() { if (!refReady && !fiJob && !curve) startFI(true); dirtyFI = true; },
+      exit() {},
+      update(dt) { update(dt); },
+      draw(resized) {
+        drawV(); drawCurrents();
+        if (dirtyFI || !curve || resized) { drawFI(); dirtyFI = !curve; }
+        readouts();
+      }
+    };
+  })();
+
+  /* ============================================================ sheet drawing
+     Shared by tabs 2 and 3. Rendered through an offscreen ImageData at cell
+     resolution and scaled up smoothly, which reads like an optical-imaging
+     movie — the right visual reference for a propagating cortical wave.
+     ====================================================================== */
+  const SheetDraw = (() => {
+    const off = document.createElement('canvas');
+    off.width = Sheet.GW; off.height = Sheet.GH;
+    const offCtx = off.getContext('2d');
+    const img = offCtx.createImageData(Sheet.GW, Sheet.GH);
+
+    /* cell index living at each grid site */
+    const at = new Int32Array(Sheet.GW * Sheet.GH);
+    for (let i = 0; i < Sheet.N; i++) at[Sheet.gy[i] * Sheet.GW + Sheet.gx[i]] = i;
+
+    /* Excitatory cells carry the story, so they are the bright channel.
+       Inhibitory cells are shown, but dimmer, or a resting patch reads blue —
+       interneurons fire faster at baseline and would otherwise dominate. */
+    const BASE = [22, 20, 19];
+    const E_HUE = [255, 126, 60];
+    const I_HUE = [70, 132, 200];
+    const I_GAIN = 0.45;
+
+    function draw(cvId, opt = {}) {
+      const cv = $(cvId); if (!cv) return;
+      fitCanvas(cv);
+      const d = Math.min(window.devicePixelRatio || 1, 2);
+      const ctx = cv.getContext('2d');
+      const W = cv.width / d, H = cv.height / d;
+      ctx.setTransform(d, 0, 0, d, 0, 0);
+      ctx.fillStyle = C.sunken; ctx.fillRect(0, 0, W, H);
+
+      const data = img.data;
+      for (let k = 0; k < at.length; k++) {
+        const i = at[k], o = k * 4;
+        const ex = Sheet.isEx[i];
+        const a = clamp(Sheet.act[i], 0, 1) * (ex ? 1 : I_GAIN);
+        const g = Math.pow(a, 0.7);
+        const hue = ex ? E_HUE : I_HUE;
+        data[o]     = Math.round(BASE[0] + (hue[0] - BASE[0]) * g);
+        data[o + 1] = Math.round(BASE[1] + (hue[1] - BASE[1]) * g);
+        data[o + 2] = Math.round(BASE[2] + (hue[2] - BASE[2]) * g);
+        data[o + 3] = 255;
+      }
+      offCtx.putImageData(img, 0, 0);
+
+      /* Leave room for the caption, and keep whole pixels per cell so the
+         array reads as 2500 discrete units rather than a smear. */
+      const capH = opt.caption ? 15 : 0;
+      const avail = Math.min(W, H - capH) - 8;
+      const cell = Math.max(1, Math.floor(avail / Sheet.GW));
+      const S = cell * Sheet.GW;
+      const x0 = Math.round((W - S) / 2), y0 = Math.round((H - capH - S) / 2);
+
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(off, x0, y0, S, S);
+      ctx.restore();
+
+      if (opt.showPoke && Sheet.poked && Sheet.poked.r > 0) {
+        const pk = Sheet.poked;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(242,239,233,0.34)';
+        ctx.setLineDash([3, 4]); ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(x0 + (pk.x + 0.5) * cell, y0 + (pk.y + 0.5) * cell, pk.r * cell, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      ctx.strokeStyle = C.axis; ctx.lineWidth = 1;
+      ctx.strokeRect(x0 - 0.5, y0 - 0.5, S + 1, S + 1);
+
+      if (opt.caption) {
+        ctx.font = '9px ' + C.mono;
+        ctx.fillStyle = C.ink4;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillText(opt.caption, x0, y0 + S + 4);
+      }
+    }
+
+    /** Map a click on the canvas to sheet coordinates. */
+    function hit(cv, ev) {
+      const r = cv.getBoundingClientRect();
+      const capH = 15;
+      const avail = Math.min(r.width, r.height - capH) - 8;
+      const cell = Math.max(1, Math.floor(avail / Sheet.GW));
+      const S = cell * Sheet.GW;
+      const x0 = (r.width - S) / 2, y0 = (r.height - capH - S) / 2;
+      const gx = (ev.clientX - r.left - x0) / cell;
+      const gy = (ev.clientY - r.top - y0) / cell;
+      if (gx < 0 || gy < 0 || gx >= Sheet.GW || gy >= Sheet.GH) return null;
+      return { x: gx, y: gy };
+    }
+
+    /** Population-rate trace, shared by both tabs. */
+    function rate(cvId, winMs, yMax) {
+      const cv = $(cvId); if (!cv) return;
+      const f = new Frame(cv, { xlim: [-winMs, 0], ylim: [0, yMax], m: { l: 42, r: 12, t: 10, b: 22 } });
+      const yt = ticks(0, yMax, 4);
+      f.grid(null, tickVals(yt));
+      const H = Sheet.hist;
+      const pull = arr => {
+        const n = Math.min(H.n, Math.round(winMs / Sheet.DT));
+        const out = new Float64Array(n * 2);
+        for (let k = 0; k < n; k++) {
+          const idx = (H.p - n + k + Sheet.HIST * 2) % Sheet.HIST;
+          out[2 * k] = -(n - 1 - k) * Sheet.DT;
+          out[2 * k + 1] = arr[idx];
+        }
+        return out;
+      };
+      f.clip();
+      f.line(pull(H.I), C.inh, 1.2);
+      f.line(pull(H.E), C.exc, 1.7);
+      f.unclip();
+      f.hline(SEIZE_HZ, C.ink4, 1, [4, 4]);
+      f.axes({ xticks: ticks(-winMs, 0, 4, v => (v / 1000).toFixed(1)), yticks: yt });
+      f.label('Hz', f.x0 - 36, f.y1 + 2, { color: C.ink4, size: 9 });
+      f.label('seizure', f.x1 - 3, f.y(SEIZE_HZ) - 3,
+        { align: 'right', baseline: 'bottom', color: C.ink4, size: 9 });
+    }
+
+    return { draw, hit, rate };
+  })();
+
+  /* The one number that decides the word on screen. */
+  const SEIZE_HZ = 25;
+
+  /* Excitability slider (0-100) to recurrent gain.
+     The bistable band is only about 0.03 wide in gain, which on a linear
+     slider is a couple of pixels — impossible to land on in front of an
+     audience. So the travel is stretched over it: coarse below, fine through
+     the critical zone (65-85 on the slider), coarse above. This is a
+     presentation choice; the model behind it is untouched. */
+  const GAIN_STOPS = [
+    [0, 1.000], [45, 1.450], [65, 1.540], [85, 1.568], [100, 1.750]
+  ];
+  function excToGain(s) {
+    for (let i = 0; i < GAIN_STOPS.length - 1; i++) {
+      const [a, ga] = GAIN_STOPS[i], [b, gb] = GAIN_STOPS[i + 1];
+      if (s <= b) return ga + (gb - ga) * (s - a) / (b - a);
+    }
+    return GAIN_STOPS[GAIN_STOPS.length - 1][1];
+  }
+
+  /** The state word, shared by both network tabs. */
+  function describe(rate, recruited) {
+    if (rate > SEIZE_HZ) {
+      return { word: 'Seizing', sub: 'Self-sustaining. Nothing is driving it.', c: C.ictal };
+    }
+    if (recruited > 0.12) {
+      return { word: 'Spreading', sub: 'A wave is crossing the patch.', c: C.warn };
+    }
+    return { word: 'Quiet', sub: 'Background firing only.', c: C.ok };
+  }
+
+  /* ================================================================== tab 02
+     The sheet as a propagation toy. Two sliders, two poke sizes, one word.
+     ====================================================================== */
+  const T2 = (() => {
+    let peakRecruit = 0, peakDecay = 0;
+
+    function syncSliders() {
+      const e = parseFloat($('s-exc').value);
+      const i = parseFloat($('s-inh').value);
+      Sheet.cfg.gEE = excToGain(e);
+      Sheet.cfg.gI = i / 100;
+      txt('r-exc', e.toFixed(0));
+      txt('r-inh', i.toFixed(0) + '%');
+    }
+
+    function pokeAt(x, y, r) {
+      Sheet.poke(x, y, r, 30, 15);
+      peakRecruit = 0; peakDecay = 0;
+    }
+
+    return {
+      cvs: ['cv-sheet', 'cv-rate'],
+      init() {
+        $('s-exc').addEventListener('input', syncSliders);
+        $('s-inh').addEventListener('input', syncSliders);
+        on('b-poke-s', 'click', () => pokeAt(Sheet.GW / 2, Sheet.GH / 2, 5));
+        on('b-poke-b', 'click', () => pokeAt(Sheet.GW / 2, Sheet.GH / 2, 9));
+        on('b-reset2', 'click', () => { Sheet.cfg.bias = 0; Sheet.reset(true); });
+        const cv = $('cv-sheet');
+        if (cv) {
+          cv.style.cursor = 'crosshair';
+          cv.addEventListener('click', ev => {
+            const h = SheetDraw.hit(cv, ev);
+            if (h) pokeAt(h.x, h.y, 9);
+          });
+        }
+        syncSliders();
+      },
+      enter() { Sheet.cfg.bias = 0; syncSliders(); Sheet.reset(true); },
+      exit() {},
+      update(dt) { stepSheet(dt); },
+      draw() {
+        const rec = Sheet.recruited();
+        peakRecruit = Math.max(peakRecruit * 0.995, rec);
+        SheetDraw.draw('cv-sheet', { showPoke: true, caption: '2500 cells · warm = excitatory' });
+        SheetDraw.rate('cv-rate', 1200, 120);
+        const r = Sheet.recent(150).E;
+        const d = describe(r, rec);
+        const el = $('r-state');
+        if (el) { el.textContent = d.word; el.style.color = d.c; }
+        txt('r-state-sub', d.sub);
+        val('r-rate2', r.toFixed(0));
+        val('r-recruit', (100 * rec).toFixed(0));
+      }
+    };
+  })();
+
+  /* ================================================================== tab 03
+     The field, then the same sheet with a stimulator on it. The gains are held
+     at the bistable setting — the argument here is about the bias, not the
+     gains — so the seizure latches on demand and the stimulator can end it.
+     ====================================================================== */
+  const T3 = (() => {
+    /* Measured, not mapped: at this gain the patch rests quietly, a poke
+       latches a self-sustaining seizure, and the stimulator can end it. */
+    const SEIZE_GAIN = 1.55;
+    let theta = 0, mA = 2, montage = 'hd';
+    let fieldDirty = true;
+    const solved = {};
+    let biasMv = 0;
+    let ramp = null;
+
+    /* offscreen buffer for the head field map */
+    const off = document.createElement('canvas');
+    off.width = Field.N; off.height = Field.N;
+    const offCtx = off.getContext('2d');
+    const offImg = offCtx.createImageData(Field.N, Field.N);
+
+    /**
+     * Relax the current-flow solve across frames.
+     *
+     * The pad montage is always solved first because the calibration is pinned
+     * to its cortical peak, so asking for a field value before it exists would
+     * bake in a wrong scale.
+     */
+    let solveState = null, solveProgress = 0;
+    function ensureSolved(name) {
+      if (solved[name] || solveState) return;
+      const want = Field.ready('pad') ? name : 'pad';
+      solveState = Field.begin(want);
+      if (!solveState) { solved[want] = true; solveState = null; fieldDirty = true; return; }
+      solveProgress = 0;
+    }
+
+    /** Called once per frame; keeps each slice inside the frame budget. */
+    function tickSolve() {
+      if (!solveState) return;
+      const t0 = performance.now();
+      let done = false;
+      while (!done && performance.now() - t0 < 9) done = Field.stepSolve(solveState, 25);
+      solveProgress = Math.min(0.99, solveState.it / 950);
+      if (done) {
+        const nm = solveState.name;
+        Field.finish(solveState);
+        solved[nm] = true;
+        solveState = null;
+        Field.calibration();
+        fieldDirty = true;
+        if (!solved[montage]) ensureSolved(montage);
+      }
+    }
+
+    /* --- the head ------------------------------------------------------- */
+    function drawHead() {
+      const cv = $('cv-head'); if (!cv) return;
+      fitCanvas(cv);
+      const d = Math.min(window.devicePixelRatio || 1, 2);
+      const ctx = cv.getContext('2d');
+      const W = cv.width / d, H = cv.height / d;
+      ctx.setTransform(d, 0, 0, d, 0, 0);
+      ctx.fillStyle = C.sunken; ctx.fillRect(0, 0, W, H);
+
+      if (!solved[montage]) {
+        ctx.font = '11px ' + C.mono; ctx.fillStyle = C.ink3;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('relaxing \u2207\u00b7(\u03c3\u2207\u03c6) = 0 \u2026 ' +
+          Math.round(solveProgress * 100) + '%', W / 2, H / 2 - 8);
+        /* a progress bar, because this is the one wait on the page */
+        const bw = Math.min(220, W * 0.55), bx = (W - bw) / 2, by = H / 2 + 10;
+        ctx.fillStyle = C.axis; ctx.fillRect(bx, by, bw, 2);
+        ctx.fillStyle = C.exc; ctx.fillRect(bx, by, bw * solveProgress, 2);
+        return;
+      }
+
+      const r = Field.run(montage), N = Field.N, cal = Field.calibration();
+      const scale = mA / 2, dd = offImg.data;
+      /* Full scale is this montage's own cortical peak. Scaling to the global
+         maximum instead would put full scale in the scalp, where the current
+         density is highest and nothing we care about happens, and leave the
+         brain uniformly dark. */
+      const full = Math.max(1e-9, r.peakRaw * cal * scale);
+      for (let j = 0; j < N; j++) {
+        for (let i = 0; i < N; i++) {
+          const k = j * N + i, o = k * 4, tis = Field.GEO.tissue[k];
+          if (tis === 0) { dd[o] = 18; dd[o + 1] = 16; dd[o + 2] = 15; dd[o + 3] = 255; continue; }
+          const c = seqRGB(Math.pow(clamp(r.E[k] * cal * scale / full, 0, 1), 0.95));
+          /* outside the brain: keep the shape, drop the emphasis */
+          const m = tis === 4 ? 1 : 0.34;
+          dd[o] = Math.round(14 + (c[0] - 14) * m);
+          dd[o + 1] = Math.round(12 + (c[1] - 12) * m);
+          dd[o + 2] = Math.round(11 + (c[2] - 11) * m);
+          dd[o + 3] = 255;
+        }
+      }
+      offCtx.putImageData(offImg, 0, 0);
+
+      const S = Math.min(W, H);
+      const x0 = (W - S) / 2, y0 = (H - S) / 2;
+      ctx.save(); ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(off, x0, y0, S, S); ctx.restore();
+
+      /* tissue boundaries, so the skull is visibly the thing in the way */
+      const cx = x0 + S / 2, cy = y0 + S / 2;
+      ctx.save(); ctx.lineWidth = 1;
+      [Field.R.scalp, Field.R.skull, Field.R.csf, Field.R.brain].forEach((rr, i) => {
+        ctx.strokeStyle = i === 1 ? 'rgba(242,239,233,0.30)' : 'rgba(242,239,233,0.12)';
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, (S / 2) * rr * 0.94, (S / 2) * rr * 0.94, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      });
+      ctx.restore();
+
+      /* `el` is { cathodes, anodes }, each a list of grid positions. The
+         cathode is the therapeutic electrode, so it is labelled. */
+      const marks = [];
+      (r.el.cathodes || []).forEach(e => marks.push({ e, cath: true }));
+      (r.el.anodes || []).forEach(e => marks.push({ e, cath: false }));
+      marks.forEach(({ e, cath }) => {
+        const px = x0 + (e.i / N) * S, py = y0 + (e.j / N) * S;
+        ctx.fillStyle = cath ? C.hyper : C.depol;
+        ctx.beginPath(); ctx.arc(px, py, 5.5, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = C.page; ctx.lineWidth = 1.5; ctx.stroke();
+      });
+      const cath = (r.el.cathodes || [])[0];
+      if (cath) {
+        const px = x0 + (cath.i / N) * S, py = y0 + (cath.j / N) * S;
+        ctx.font = '9px ' + C.mono;
+        ctx.fillStyle = C.hyper;
+        ctx.textAlign = px > x0 + S / 2 ? 'right' : 'left';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText('cathode', px + (px > x0 + S / 2 ? -10 : 10), py + 14);
+      }
+
+      ctx.font = '10px ' + C.mono;
+      ctx.fillStyle = C.ink2; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+      ctx.fillText(Field.peakField(montage, mA).toFixed(2) + ' V/m at cortex', 8, H - 6);
+      ctx.font = '9px ' + C.mono; ctx.fillStyle = C.ink4;
+      ctx.textAlign = 'right';
+      ctx.fillText('scaled to this montage\u2019s peak', W - 8, H - 6);
+    }
+
+    /* --- one cell in a uniform field ------------------------------------ */
+    const SEGS = (() => {
+      const out = [];
+      for (let k = 0; k < 26; k++) out.push({ a: [-0.62 + k * 0.055, 0], b: [-0.62 + (k + 1) * 0.055, 0], w: 3.2 - k * 0.06 });
+      [[0.78, 0.30], [0.78, -0.30], [0.90, 0.14], [0.90, -0.14]].forEach(q => out.push({ a: [0.76, 0], b: [q[0] + 0.12, q[1]], w: 1.4 }));
+      [[-0.95, 0.26], [-0.95, -0.26], [-0.92, 0.05], [-0.92, -0.05]].forEach(q => out.push({ a: [-0.62, 0], b: q, w: 1.5 }));
+      out.push({ a: [-0.66, 0], b: [-1.05, 0.02], w: 1.0 });
+      return out;
+    })();
+
+    function drawCell() {
+      const cv = $('cv-cell'); if (!cv) return;
+      fitCanvas(cv);
+      const d = Math.min(window.devicePixelRatio || 1, 2);
+      const ctx = cv.getContext('2d');
+      const W = cv.width / d, H = cv.height / d;
+      ctx.setTransform(d, 0, 0, d, 0, 0);
+      ctx.fillStyle = C.sunken; ctx.fillRect(0, 0, W, H);
+
+      /* field arrows, straight down the panel */
+      ctx.save();
+      ctx.strokeStyle = 'rgba(242,239,233,0.09)'; ctx.fillStyle = 'rgba(242,239,233,0.09)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 7; i++) {
+        const x = 20 + i * (W - 40) / 6;
+        ctx.beginPath(); ctx.moveTo(x, 12); ctx.lineTo(x, H - 18); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x, H - 12); ctx.lineTo(x - 3.5, H - 19); ctx.lineTo(x + 3.5, H - 19);
+        ctx.closePath(); ctx.fill();
+      }
+      ctx.restore();
+
+      const th = theta * Math.PI / 180;
+      const R = Math.min(W, H) * 0.34;
+      const dvMax = Math.max(1e-9, Field.LAMBDA * Field.eField(4));
+
+      ctx.save();
+      ctx.translate(W / 2, H / 2);
+      ctx.rotate(Math.PI / 2 - th);
+      ctx.lineCap = 'round';
+      SEGS.forEach(sg => {
+        const xm = (sg.a[0] + sg.b[0]) / 2;
+        ctx.strokeStyle = divergingCSS(Field.profileDV(mA, th, xm) / dvMax);
+        ctx.lineWidth = sg.w;
+        ctx.beginPath();
+        ctx.moveTo(sg.a[0] * R, sg.a[1] * R);
+        ctx.lineTo(sg.b[0] * R, sg.b[1] * R);
+        ctx.stroke();
+      });
+      const dvS = Field.somaticDV(mA, th);
+      ctx.fillStyle = divergingCSS(dvS / dvMax);
+      ctx.beginPath();
+      ctx.moveTo(-0.60 * R, 0); ctx.lineTo(-0.80 * R, 0.11 * R); ctx.lineTo(-0.80 * R, -0.11 * R);
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+
+      ctx.font = '9px ' + C.mono;
+      ctx.fillStyle = C.ink4; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText('E', 8, 8);
+      ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+      ctx.fillStyle = dvS < 0 ? C.hyper : C.depol;
+      ctx.font = '11px ' + C.mono;
+      ctx.fillText('soma ' + (dvS >= 0 ? '+' : '−') + Math.abs(dvS).toFixed(3) + ' mV', W - 8, H - 8);
+    }
+
+    /* --- the folded cortex ---------------------------------------------- */
+    function drawGyri() {
+      const cv = $('cv-gyri'); if (!cv) return;
+      fitCanvas(cv);
+      const d = Math.min(window.devicePixelRatio || 1, 2);
+      const ctx = cv.getContext('2d');
+      const W = cv.width / d, H = cv.height / d;
+      ctx.setTransform(d, 0, 0, d, 0, 0);
+      ctx.fillStyle = C.sunken; ctx.fillRect(0, 0, W, H);
+
+      ctx.save();
+      ctx.strokeStyle = 'rgba(242,239,233,0.07)'; ctx.fillStyle = 'rgba(242,239,233,0.07)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 9; i++) {
+        const x = 12 + i * (W - 24) / 8;
+        ctx.beginPath(); ctx.moveTo(x, 6); ctx.lineTo(x, H - 12); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x, H - 6); ctx.lineTo(x - 3, H - 12); ctx.lineTo(x + 3, H - 12);
+        ctx.closePath(); ctx.fill();
+      }
+      ctx.restore();
+
+      const cx = W * 0.5, cy = H * 0.47;
+      const RX = Math.min(W * 0.21, H * 0.30), RY = Math.min(W * 0.27, H * 0.36);
+      const band = Math.min(RX, RY) * 0.34;
+
+      const ell = (rx, ry) => { ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); };
+      ell(RX, RY);
+      ctx.fillStyle = 'rgba(242,239,233,0.05)'; ctx.fill();
+      ctx.strokeStyle = 'rgba(242,239,233,0.18)'; ctx.lineWidth = 1; ctx.stroke();
+      ell(RX - band, RY - band);
+      ctx.fillStyle = C.sunken; ctx.fill();
+      ctx.strokeStyle = 'rgba(242,239,233,0.09)'; ctx.stroke();
+
+      ctx.save();
+      ctx.strokeStyle = 'rgba(242,239,233,0.09)'; ctx.lineWidth = 1;
+      [-1, 1].forEach(sg => {
+        ctx.beginPath(); ctx.ellipse(cx + sg * RX * 2.45, cy, RX, RY, 0, 0, Math.PI * 2); ctx.stroke();
+      });
+      ctx.restore();
+
+      const dvMax = Math.max(1e-9, Field.LAMBDA * Field.eField(4));
+      const sites = [
+        { phi: -Math.PI / 2, name: 'crown', ha: 'center' },
+        { phi: 0, name: 'wall', ha: 'left' },
+        { phi: Math.PI / 2, name: 'fundus', ha: 'center' }
+      ];
+
+      sites.forEach(st => {
+        const nx = Math.cos(st.phi), ny = Math.sin(st.phi);
+        const th = Math.acos(clamp(ny, -1, 1));
+        const sx = cx + nx * (RX - band), sy = cy + ny * (RY - band);
+        const tx = cx + nx * RX, ty = cy + ny * RY;
+        ctx.lineCap = 'round';
+        for (let k = 0; k < 10; k++) {
+          const u0 = k / 10, u1 = (k + 1) / 10;
+          const xm = -1 + (u0 + u1);
+          ctx.strokeStyle = divergingCSS(Field.profileDV(mA, th, xm) / dvMax);
+          ctx.lineWidth = 3.0 - k * 0.16;
+          ctx.beginPath();
+          ctx.moveTo(sx + (tx - sx) * u0, sy + (ty - sy) * u0);
+          ctx.lineTo(sx + (tx - sx) * u1, sy + (ty - sy) * u1);
+          ctx.stroke();
+        }
+        const dv = Field.somaticDV(mA, th);
+        ctx.fillStyle = divergingCSS(dv / dvMax);
+        ctx.beginPath(); ctx.arc(sx, sy, 4.2, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = C.sunken; ctx.lineWidth = 1; ctx.stroke();
+
+        const lx = cx + nx * (RX + 12), ly = cy + ny * (RY + 12);
+        ctx.font = '9px ' + C.mono;
+        ctx.textAlign = st.ha;
+        ctx.textBaseline = ny > 0.5 ? 'top' : (ny < -0.5 ? 'bottom' : 'middle');
+        const dy = ny > 0.5 ? 0 : (ny < -0.5 ? -11 : -6);
+        ctx.fillStyle = C.ink3; ctx.fillText(st.name, lx, ly + dy);
+        ctx.fillStyle = Math.abs(dv) < 1e-4 ? C.ink2 : (dv < 0 ? C.hyper : C.depol);
+        ctx.fillText(Math.abs(dv) < 1e-4 ? 'null' : (dv >= 0 ? '+' : '−') + Math.abs(dv).toFixed(3), lx, ly + dy + 11);
+      });
+
+      ctx.font = '9px ' + C.mono;
+      ctx.fillStyle = C.ink4; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText('E', 8, 8);
+    }
+
+    /* --- the stimulator -------------------------------------------------- */
+    function pushBias() {
+      Sheet.cfg.bias = biasMv;
+      $('s-bias').value = String(biasMv);
+      txt('r-bias', biasMv.toFixed(3) + ' mV');
+      val('r-bias3', biasMv.toFixed(3));
+      txt('stim-units', biasMv <= 0 ? 'stimulator off' : 'stimulator ' + biasMv.toFixed(3) + ' mV');
+    }
+
+    /* A hands-off ramp, for when the speaker would rather talk than drag. */
+    const RAMP_RATE = 0.09;          // mV per second of model time
+    function startRamp() {
+      if (!Sheet.isIctal()) Sheet.poke(Sheet.GW / 2, Sheet.GH / 2, 9, 30, 15);
+      ramp = { phase: 'wait', wait: 0, below: 0 };
+    }
+    function tickRamp(simMs) {
+      if (!ramp) return;
+      const r = Sheet.recent(200).E;
+      if (ramp.phase === 'wait') {
+        ramp.wait += simMs;
+        if (Sheet.isIctal()) { ramp.phase = 'up'; ramp.below = 0; }
+        else if (ramp.wait > 2500) ramp = null;
+        return;
+      }
+      if (ramp.phase === 'up') {
+        biasMv = Math.min(0.5, biasMv + RAMP_RATE * simMs / 1000);
+        pushBias();
+        ramp.below = r < SEIZE_HZ ? ramp.below + simMs : 0;
+        if (ramp.below > 700 || biasMv >= 0.5) ramp = null;
+        return;
+      }
+    }
+
+    function readouts() {
+      const th = theta * Math.PI / 180;
+      txt('r-theta', theta + deg);
+      txt('f-theta', 'θ = ' + theta + deg);
+      txt('r-ma', mA.toFixed(1) + ' mA');
+      val('r-efield', Field.eField(mA).toFixed(2));
+      const dv = Field.somaticDV(mA, th);
+      val('r-dvm', (dv >= 0 ? '+' : '−') + Math.abs(dv).toFixed(3));
+      const e = $('r-dvm');
+      if (e) e.style.color = Math.abs(dv) < 1e-4 ? C.ink1 : (dv < 0 ? C.hyper : C.depol);
+    }
+
+    function setMontage(m) {
+      montage = m;
+      $('b-mont-hd').setAttribute('aria-pressed', String(m === 'hd'));
+      $('b-mont-pad').setAttribute('aria-pressed', String(m === 'pad'));
+      txt('f-mont', Field.MONTAGES[m].label);
+      fieldDirty = true;
+      ensureSolved(m);
+    }
+
+    return {
+      cvs: ['cv-head', 'cv-cell', 'cv-gyri', 'cv-sheet3', 'cv-rate3'],
+      init() {
+        const st = $('s-theta'), sm = $('s-ma'), sb = $('s-bias');
+        theta = parseFloat(st.value); mA = parseFloat(sm.value);
+        st.addEventListener('input', () => { theta = parseFloat(st.value); fieldDirty = true; });
+        sm.addEventListener('input', () => { mA = parseFloat(sm.value); fieldDirty = true; });
+        sb.addEventListener('input', () => { biasMv = parseFloat(sb.value); ramp = null; pushBias(); });
+        on('b-mont-hd', 'click', () => setMontage('hd'));
+        on('b-mont-pad', 'click', () => setMontage('pad'));
+        on('b-seize', 'click', () => { Sheet.poke(Sheet.GW / 2, Sheet.GH / 2, 9, 30, 15); });
+        on('b-ramp', 'click', startRamp);
+        on('b-reset3', 'click', () => {
+          ramp = null; biasMv = 0; pushBias(); Sheet.reset(true);
+        });
+        txt('f-mont', Field.MONTAGES[montage].label);
+      },
+      enter() {
+        Sheet.cfg.gEE = SEIZE_GAIN;
+        Sheet.cfg.gI = 1.0;
+        biasMv = parseFloat($('s-bias').value);
+        pushBias();
+        Sheet.reset(true);
+        fieldDirty = true;
+        ensureSolved(montage);
+      },
+      exit() { ramp = null; },
+      update(dt) { tickSolve(); tickRamp(stepSheet(dt)); },
+      draw(resized) {
+        /* A resized canvas is a blank one, so the static field panels repaint
+           whenever the layout moved as well as when a control did. */
+        if (fieldDirty || solveState || resized) {
+          drawHead(); drawCell(); drawGyri(); readouts();
+          if (!solveState) fieldDirty = false;
+        }
+        SheetDraw.draw('cv-sheet3', { showPoke: false, caption: 'same patch, held at the tipping point' });
+        SheetDraw.rate('cv-rate3', 1200, 120);
+        const r = Sheet.recent(150).E;
+        const d = describe(r, Sheet.recruited());
+        const el = $('r-state3');
+        if (el) { el.textContent = d.word; el.style.color = d.c; }
+        txt('r-state3-sub', r > SEIZE_HZ
+          ? 'Raise the stimulator until it stops.'
+          : (biasMv > 0.02 ? 'Stopped. Turn the stimulator down — it stays quiet.' : 'Press Trigger seizure.'));
+        val('r-rate3', r.toFixed(0));
+      }
+    };
+  })();
+
+  /* ================================================================== shared
+     The sheet advances in model time proportional to wall clock, capped so a
+     slow frame does not become a huge simulated jump.
+     ====================================================================== */
+  function stepSheet(dtMs) {
+    const want = Clock.take(dtMs);
+    /* Cap the work per frame so a slow frame at live speed cannot spiral. */
+    const n = Math.min(120, Math.floor(want / Sheet.DT));
+    for (let i = 0; i < n; i++) Sheet.step();
+    const done = n * Sheet.DT;
+    Clock.used(want, done);
+    return done;
+  }
+
+  /* ================================================================== router */
+  const MOD = [T1, T2, T3];
+  let cur = -1;
+
+  function go(n) {
+    n = clamp(n | 0, 0, MOD.length - 1);
+    if (n === cur) return;
+    if (cur >= 0) {
+      $('view-' + cur).classList.remove('is-active');
+      $('tab-' + cur).setAttribute('aria-selected', 'false');
+      if (MOD[cur].exit) MOD[cur].exit();
+    }
+    cur = n;
+    $('view-' + cur).classList.add('is-active');
+    $('tab-' + cur).setAttribute('aria-selected', 'true');
+    (MOD[cur].cvs || []).forEach(id => { const cv = $(id); if (cv) fitCanvas(cv); });
+    Clock.reset();
+    if (MOD[cur].enter) MOD[cur].enter();
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    try { history.replaceState(null, '', '#' + (cur + 1)); } catch (_) { /* file:// */ }
+  }
+
+  /* ==================================================================== loop */
+  /* Report a render fault once per distinct message, in the page rather than
+     only the console, so a failure is visible to whoever is presenting. */
+  const seenErrors = new Set();
+  function reportFrameError(err) {
+    const msg = (err && err.message) || String(err);
+    if (seenErrors.has(msg)) return;
+    seenErrors.add(msg);
+    try {
+      console.error('render fault:', err);
+      let bar = $('fault');
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'fault';
+        bar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:9999;' +
+          'background:#5a1414;color:#fff;font:12px/1.5 ui-monospace,monospace;padding:8px 14px';
+        document.body.appendChild(bar);
+      }
+      bar.textContent = 'Render fault (the page is still running): ' + msg;
+    } catch (_) { /* nothing useful left to do */ }
+  }
+
+  let last = 0;
+  function frame(now) {
+    const dt = last ? Math.min(60, now - last) : 16;
+    last = now;
+    jobs.forEach(j => { if (j.tick()) jobs.delete(j); });
+    const m = MOD[cur];
+    /* An exception thrown here would skip the reschedule below and freeze the
+       whole page for good, which is a spectacularly bad failure mode for a
+       thing being demonstrated live. Catch, report once, keep running. */
+    try {
+      if (m) {
+        /* Re-fit before drawing: fitCanvas is a no-op unless the box actually
+           changed, and it returns true when it did. */
+        let resized = false;
+        (m.cvs || []).forEach(id => { const cv = $(id); if (cv && fitCanvas(cv)) resized = true; });
+        if (m.update) m.update(dt);
+        if (m.draw) m.draw(resized);
+      }
+      txt('clock-t', Clock.label());
+    } catch (err) {
+      reportFrameError(err);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  /* ==================================================================== boot */
+  function boot() {
+    MOD.forEach(m => { if (m.init) m.init(); });
+
+    MOD.forEach((m, i) => on('tab-' + i, 'click', () => go(i)));
+
+    document.querySelectorAll('.sp').forEach(b =>
+      b.addEventListener('click', () => Clock.set(parseFloat(b.dataset.speed))));
+    on('b-pause', 'click', () => Clock.pause());
+    Clock.set(0.02);
+
+    document.addEventListener('keydown', e => {
+      if (e.target.matches('input, textarea, select')) {
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') return;
+      }
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === 'ArrowRight') { go(cur + 1); e.preventDefault(); }
+      else if (e.key === 'ArrowLeft') { go(cur - 1); e.preventDefault(); }
+      else if (e.key >= '1' && e.key <= '3') { go(parseInt(e.key, 10) - 1); e.preventDefault(); }
+      else if (e.key === ' ') { Clock.pause(); e.preventDefault(); }
+    });
+
+    let rt = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(rt);
+      rt = setTimeout(() => {
+        (MOD[cur].cvs || []).forEach(id => { const cv = $(id); if (cv) fitCanvas(cv); });
+      }, 120);
+    });
+
+    const h = parseInt((location.hash || '').replace('#', ''), 10);
+    go(isFinite(h) && h >= 1 && h <= MOD.length ? h - 1 : 0);
+    requestAnimationFrame(frame);
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+  return { go, get tab() { return cur; } };
+})();
+</script>
+</div>
+</body>
+</html>
