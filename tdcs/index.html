@@ -420,7 +420,7 @@ table.data td.num { font-family: var(--mono); font-variant-numeric: tabular-nums
 
     <div class="rig side">
       <div class="panel">
-        <div class="panel-head"><span class="panel-name">Readout</span><span class="panel-units">live</span></div>
+        <div class="panel-head"><span class="panel-name">Readout</span><span class="panel-units">curve + trace</span></div>
         <div class="panel-body">
           <div class="readouts">
             <div><div class="ro-label">Firing rate</div><div class="ro-val" id="r-rate">0<span class="u">Hz</span></div></div>
@@ -1540,7 +1540,14 @@ const Sheet = (() => {
   const cosT = new Float32Array(N);       // dendritic orientation, E cells only
   const fired = new Int32Array(N);
   const gx = new Int16Array(N), gy = new Int16Array(N);
-  const act = new Float32Array(N);        // recent-activity trace, for the patch
+  const act = new Float32Array(N);        // fast trace: who fired just now, the wave front
+  /* Sustained-engagement trace: a leaky per-cell spike count, i.e. a firing-rate
+     estimate over about 100 ms. The fast trace alone cannot tell a seizure from a
+     quiet patch between volleys, because both are momentarily silent; this one
+     can, because a seizing cell has fired far more often in the recent past.
+     Drawing only. Nothing in the model reads it. */
+  const actR = new Float32Array(N);
+  const decR = 0.995;                     // about 100 ms of memory
   const isEx = new Uint8Array(N);
 
   let rowStart, target, weightScale;      // CSR, indexed by presynaptic cell
@@ -1671,7 +1678,7 @@ const Sheet = (() => {
     const R = seedRand(4242);
     for (let i = 0; i < N; i++) {
       v[i] = -65 + 5 * (R() - 0.5); u[i] = pb[i] * v[i];
-      xE[i] = 0; xI[i] = 0; act[i] = 0;
+      xE[i] = 0; xI[i] = 0; act[i] = 0; actR[i] = 0;
     }
     if (hard) { hp = 0; hn = 0; rp = 0; rn = 0; t = 0; }
     lastPoke = { x: GW / 2, y: GH / 2, r: 0 };
@@ -1715,13 +1722,13 @@ const Sheet = (() => {
       if (!isFinite(vi) || vi >= 30) {
         fired[nFired++] = i;
         vi = pc[i]; ui = ui + pd[i];
-        act[i] = 1;
+        act[i] = 1; actR[i] += 1;
       }
       v[i] = vi; u[i] = ui;
     }
     if (kickLeft > 0) kickLeft -= DT;
 
-    for (let i = 0; i < N; i++) { xE[i] *= decE; xI[i] *= decI; act[i] *= 0.94; }
+    for (let i = 0; i < N; i++) { xE[i] *= decE; xI[i] *= decI; act[i] *= 0.94; actR[i] *= decR; }
 
     const gIeff = gI * (1 - CL.depth * cl);
     let nEf = 0, nIf = 0, synDrive = 0;
@@ -1799,7 +1806,7 @@ const Sheet = (() => {
 
   return {
     N, NE, NI, GW, GH, DT, HIST, UNITS_PER_MV, nSyn, cfg, CL,
-    gx, gy, act, cosT, isEx,
+    gx, gy, act, actR, cosT, isEx,
     get baseCos() { return baseCos; },
     get chloride() { return cl; },
     get t() { return t; },
@@ -2208,6 +2215,15 @@ const App = (() => {
     const I_HUE = [70, 132, 200];
     const I_GAIN = 0.45;
 
+    /* Two timescales, because they answer different questions. The fast trace
+       shows WHERE the wave is right now and keeps its front crisp. The sustained
+       channel shows WHO HAS BEEN FIRING HARD, which is what stays true through
+       the pause between volleys. Without it a seizing patch goes black between
+       bursts and reads as a patch that has stopped. R_NORM puts a seizing cell
+       at the top of the scale; a resting one lands near 0.12, so quiet still
+       looks quiet. */
+    const R_NORM = 0.20, SUSTAIN = 0.55;
+
     function draw(cvId, opt = {}) {
       const cv = $(cvId); if (!cv) return;
       fitCanvas(cv);
@@ -2221,8 +2237,10 @@ const App = (() => {
       for (let k = 0; k < at.length; k++) {
         const i = at[k], o = k * 4;
         const ex = Sheet.isEx[i];
-        const a = clamp(Sheet.act[i], 0, 1) * (ex ? 1 : I_GAIN);
-        const g = Math.pow(a, 0.7);
+        const dim = ex ? 1 : I_GAIN;
+        const a = clamp(Sheet.act[i], 0, 1) * dim;
+        const sus = clamp(Sheet.actR[i] * R_NORM, 0, 1) * dim;
+        const g = Math.max(Math.pow(a, 0.7), SUSTAIN * Math.pow(sus, 0.7));
         const hue = ex ? E_HUE : I_HUE;
         data[o]     = Math.round(BASE[0] + (hue[0] - BASE[0]) * g);
         data[o + 1] = Math.round(BASE[1] + (hue[1] - BASE[1]) * g);
