@@ -2364,7 +2364,7 @@ const App = (() => {
      The sheet as a propagation toy. Two sliders, two poke sizes, one word.
      ====================================================================== */
   const T2 = (() => {
-    let peakRecruit = 0, peakDecay = 0;
+    let peakRecruit = 0;
 
     function syncSliders() {
       const e = parseFloat($('s-exc').value);
@@ -2377,7 +2377,7 @@ const App = (() => {
 
     function pokeAt(x, y, r) {
       Sheet.poke(x, y, r, 30, 15);
-      peakRecruit = 0; peakDecay = 0;
+      peakRecruit = 0;
     }
 
     return {
@@ -2402,6 +2402,11 @@ const App = (() => {
       exit() {},
       update(dt) { stepSheet(dt); },
       draw() {
+        /* The instantaneous recruited fraction swings 0 to 94% within one burst
+           cycle, which on screen is a number strobing rather than a number to
+           read. The word and the plot use the instantaneous value; the readout
+           shows a slowly sagging peak hold, which rises the moment the patch is
+           taken and falls only once it genuinely lets go. */
         const rec = Sheet.recruited();
         peakRecruit = Math.max(peakRecruit * 0.995, rec);
         SheetDraw.draw('cv-sheet', { showPoke: true, caption: '2500 cells · warm = excitatory' });
@@ -2412,7 +2417,7 @@ const App = (() => {
         if (el) { el.textContent = d.word; el.style.color = d.c; }
         txt('r-state-sub', d.sub);
         val('r-rate2', r.toFixed(0));
-        val('r-recruit', (100 * rec).toFixed(0));
+        val('r-recruit', (100 * peakRecruit).toFixed(0));
       }
     };
   })();
