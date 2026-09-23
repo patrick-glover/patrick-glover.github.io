@@ -1,0 +1,1037 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skull Spatial Filter</title>
+<style>
+:root {
+  color-scheme: dark;
+  --page:   #0f1113;
+  --panel:  #15181b;
+  --raised: #1d2125;
+  --line:   rgba(232, 230, 225, 0.10);
+  --line-2: rgba(232, 230, 225, 0.05);
+  --ink-1:  #ebe8e2;
+  --ink-2:  #b5b1aa;
+  --ink-3:  #7f7b75;
+  --ink-4:  #55524e;
+
+  --bone:   #dcc59b;
+  --breach: #3ec9b0;
+  --e1:     #f2b33d;
+  --e2:     #b48cf2;
+
+  --sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--page); color: var(--ink-1);
+  font: 14px/1.5 var(--sans); -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1320px; margin: 0 auto; padding: 0 28px 80px; }
+
+header {
+  display: flex; align-items: baseline; gap: 16px;
+  padding: 26px 0 18px; border-bottom: 1px solid var(--line);
+}
+header .tag { font: 10.5px var(--mono); letter-spacing: .18em; text-transform: uppercase; color: var(--ink-4); }
+header h1 { margin: 0; font-size: 20px; font-weight: 500; letter-spacing: -.01em; }
+
+section { padding: 30px 0 34px; border-bottom: 1px solid var(--line); }
+.mh { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; }
+.mh .n { font: 11px var(--mono); color: var(--bone); }
+.mh h2 { margin: 0; font-size: 16px; font-weight: 500; }
+
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; margin-bottom: 14px; }
+.grp { display: flex; align-items: center; gap: 10px; }
+.k { font: 9.5px var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-4); }
+.v { font: 11px var(--mono); font-variant-numeric: tabular-nums; color: var(--ink-2); min-width: 62px; }
+
+button, .btn {
+  appearance: none; font: 10.5px var(--mono); letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ink-2); background: var(--raised); border: 1px solid var(--line);
+  border-radius: 3px; padding: 7px 12px; cursor: pointer; white-space: nowrap;
+  transition: background .12s, color .12s;
+}
+button:hover, .btn:hover { color: var(--ink-1); background: #262b30; }
+button:focus-visible, .btn:focus-within { outline: 2px solid var(--breach); outline-offset: 2px; }
+button:disabled { opacity: .45; cursor: default; }
+button[aria-pressed="true"] { background: var(--ink-1); color: var(--page); }
+button.br[aria-pressed="true"] { background: var(--breach); color: #07211c; border-color: transparent; }
+.seg { display: flex; }
+.seg button { border-radius: 0; margin-left: -1px; }
+.seg button:first-child { border-radius: 3px 0 0 3px; margin-left: 0; }
+.seg button:last-child { border-radius: 0 3px 3px 0; }
+.src { font: 11px var(--mono); color: var(--ink-3); max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+input[type=range] { -webkit-appearance: none; appearance: none; width: 150px; height: 18px; background: transparent; cursor: pointer; }
+input[type=range]::-webkit-slider-runnable-track { height: 2px; background: var(--ink-4); border-radius: 1px; }
+input[type=range]::-moz-range-track { height: 2px; background: var(--ink-4); border-radius: 1px; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; margin-top: -5px; border-radius: 50%; background: var(--ink-1); border: 0; }
+input[type=range]::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--ink-1); border: 0; }
+input[type=range]:focus-visible { outline: 2px solid var(--breach); outline-offset: 2px; }
+
+.panel { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.panel canvas { display: block; width: 100%; height: 100%; }
+.cap { position: absolute; top: 8px; left: 10px; font: 9.5px var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); pointer-events: none; }
+
+.g1 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.g1 .panel { height: 300px; }
+.g3 { display: grid; grid-template-columns: 1fr 1fr 1.15fr; gap: 12px; }
+.g3 .sq { aspect-ratio: 1; }
+.g3 .sq canvas { cursor: crosshair; touch-action: none; }
+.g3 .tr { min-height: 300px; }
+.g3 .tr canvas { position: absolute; inset: 0; }
+.g3 .tf { grid-column: 1 / -1; height: 250px; }
+.g3 .tf canvas { cursor: default; }
+
+details.how { margin: -4px 0 16px; max-width: 78ch; }
+details.how summary {
+  font: 9.5px var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3);
+  cursor: pointer; list-style: none; width: max-content;
+}
+details.how summary::before { content: '+ '; }
+details.how[open] summary::before { content: '− '; }
+details.how summary:hover { color: var(--ink-1); }
+details.how p { margin: 8px 0 0; color: var(--ink-2); font-size: 13px; line-height: 1.6; }
+
+.drop { outline: 2px dashed var(--breach); outline-offset: 6px; }
+
+@media (max-width: 1000px) {
+  .g3 { grid-template-columns: 1fr 1fr; }
+  .g3 .tr { grid-column: 1 / -1; height: 320px; }
+}
+@media (max-width: 760px) {
+  .wrap { padding: 0 16px 60px; }
+  .g1 { grid-template-columns: 1fr; }
+  .g3 { grid-template-columns: 1fr; }
+  input[type=range] { width: 120px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <span class="tag">physicsviz</span>
+  <h1>Skull ≈ spatial low-pass filter</h1>
+</header>
+
+<!-- ============================================================ 01 SONG -->
+<section id="m1">
+  <div class="mh"><span class="n">01</span><h2>Song</h2></div>
+  <details class="how"><summary>How it works</summary>
+    <p>The song passes through two stacked low-pass filters (−24 dB per octave) plus some overall loss. That's the skull. The Skull slider sets the cutoff. Breach crossfades to a second path with a 12× higher cutoff and no loss. Left panel: the song going in (faint) and coming out (bright), with the filter's gain curve on the right-hand axis. Drag across it to move the cutoff. Right panel: a scrolling spectrogram of what's playing. Drop any audio file on this section to use your own song.</p>
+    <p>This is an analogy. This filter works on frequency in time; the skull's works on size in space. The skull only removes fast rhythms when they come from small patches that are out of sync with each other, which cortical fast activity usually does. Model 02 shows the difference.</p>
+  </details>
+  <div class="bar">
+    <div class="grp">
+      <button id="m1-play" disabled>…</button>
+      <label class="btn">Load song<input id="m1-file" type="file" accept="audio/*" hidden></label>
+      <span class="src" id="m1-src">built-in loop</span>
+    </div>
+    <div class="grp">
+      <span class="k">Skull</span>
+      <input id="m1-skull" type="range" min="0" max="1" step="0.001" value="0.6" aria-label="Skull (low-pass cutoff)">
+      <span class="v" id="m1-skull-v"></span>
+    </div>
+    <button id="m1-breach" class="br" aria-pressed="false">Breach</button>
+  </div>
+  <div class="g1">
+    <div class="panel"><canvas id="m1-spec"></canvas><span class="cap">spectrum</span></div>
+    <div class="panel"><canvas id="m1-sgram"></canvas><span class="cap">what you hear</span></div>
+  </div>
+</section>
+
+<!-- ============================================================ 02 CORTEX → SCALP -->
+<section id="m3">
+  <div class="mh"><span class="n">02</span><h2>Cortex → scalp</h2></div>
+  <details class="how"><summary>How it works</summary>
+    <p>A 128 × 128 mm patch of cortex, 1 pixel per mm. It has four kinds of source: broad travelling waves at ~10 Hz; patches about 1.5 cm across at ~6 Hz; 160 tiny patches at 20–38 Hz; and, off to start, one large in-phase 20 Hz wave. Each tiny patch has a positive centre and a negative rim that cancel at a distance, like the opposing walls of a sulcus. Each source waxes and wanes on its own schedule.</p>
+    <p>Above the cortex sit flat layers of CSF (1.5 mm), bone (40× more resistive than scalp) and scalp. For each spatial wavelength, Laplace's equation is solved exactly through the layers. Voltage is fixed at the cortex, no current escapes into the air, and voltage and current carry across each boundary. That gives the curve in the bottom panel: scalp amplitude as a fraction of cortex amplitude, for each wavelength. It's the skull's EQ. The dots mark each source type's typical wavelength on the bone curve and on the breach curve. The curve depends only on size: tissue conducts the same at every frequency in the EEG range, so how fast a source oscillates never enters the calculation. The 30 Hz patches are hidden because they are small and out of sync with each other. The 20 Hz · wide source (off to start) is fast but large and in phase across the whole patch, like photic driving. It passes through bone as easily as the 10 Hz waves. A breach removes the bone, so the scalp settles onto the CSF.</p>
+    <p>The scalp map is the cortex run through that filter in 2D, using an FFT. Under bone it uses the bone curve; under the painted breach it uses the breach curve, blended at the edge. E1 and E2 read the scalp through the same filters. Their traces and power spectra are on the right. Paint breach or bone on either map, and drag the electrodes. Scalp sets the soft tissue over everything. At 0 mm, a breach leaves only CSF over the cortex, much like an electrode on the brain surface. Time is slowed down (Speed). Gain scales the scalp map and the traces together.</p>
+  </details>
+  <div class="bar">
+    <div class="grp seg" id="m3-src">
+      <button data-g="slow" aria-pressed="true">10 Hz · wide</button>
+      <button data-g="mid" aria-pressed="true">6 Hz · patch</button>
+      <button data-g="fast" aria-pressed="true">30 Hz · focal</button>
+      <button data-g="photic" aria-pressed="false">20 Hz · wide</button>
+    </div>
+    <div class="grp">
+      <span class="k">Paint</span>
+      <div class="seg" id="m3-brush">
+        <button data-b="breach" aria-pressed="true">Breach</button>
+        <button data-b="bone" aria-pressed="false">Bone</button>
+      </div>
+      <button id="m3-reset">Reset</button>
+    </div>
+    <div class="grp">
+      <span class="k">Skull</span>
+      <input id="m3-skull" type="range" min="2" max="12" step="0.5" value="7" aria-label="Skull thickness">
+      <span class="v" id="m3-skull-v"></span>
+    </div>
+    <div class="grp">
+      <span class="k">Scalp</span>
+      <input id="m3-soft" type="range" min="0" max="8" step="0.5" value="6" aria-label="Scalp thickness">
+      <span class="v" id="m3-soft-v"></span>
+    </div>
+    <div class="grp">
+      <span class="k">Gain</span>
+      <input id="m3-gain" type="range" min="0" max="1000" step="1" value="450" aria-label="Scalp display gain">
+      <span class="v" id="m3-gain-v"></span>
+    </div>
+    <div class="grp">
+      <span class="k">Speed</span>
+      <div class="seg" id="m3-speed">
+        <button data-s="0.03" aria-pressed="false">0.03×</button>
+        <button data-s="0.1" aria-pressed="true">0.1×</button>
+        <button data-s="0.3" aria-pressed="false">0.3×</button>
+        <button data-s="1" aria-pressed="false">1×</button>
+      </div>
+    </div>
+  </div>
+  <div class="g3">
+    <div class="panel sq"><canvas id="m3-cortex"></canvas><span class="cap">cortex</span></div>
+    <div class="panel sq"><canvas id="m3-scalp"></canvas><span class="cap" id="m3-scalp-cap">scalp</span></div>
+    <div class="panel tr"><canvas id="m3-traces"></canvas></div>
+    <div class="panel tf"><canvas id="m3-tf"></canvas><span class="cap">scalp / cortex</span></div>
+  </div>
+</section>
+
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const TAU = Math.PI * 2;
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const C = {
+  ink1: css('--ink-1'), ink2: css('--ink-2'), ink3: css('--ink-3'), ink4: css('--ink-4'),
+  line: css('--line'), line2: css('--line-2'), panel: css('--panel'),
+  bone: css('--bone'), breach: css('--breach'), e1: css('--e1'), e2: css('--e2'),
+  mono: css('--mono'),
+};
+
+/* Size a canvas to its box at device resolution; returns a context in CSS px. */
+function fit(cv) {
+  const r = cv.getBoundingClientRect();
+  const d = Math.min(2, window.devicePixelRatio || 1);
+  const W = Math.max(1, Math.round(r.width * d)), H = Math.max(1, Math.round(r.height * d));
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  const x = cv.getContext('2d');
+  x.setTransform(d, 0, 0, d, 0, 0);
+  return { x, w: r.width, h: r.height };
+}
+function label(x, s, px, py, color, align = 'left', base = 'alphabetic') {
+  x.font = `10px ${C.mono}`; x.fillStyle = color; x.textAlign = align; x.textBaseline = base;
+  x.fillText(s, px, py);
+}
+function hex(h) { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+
+/* Colour ramps as 256-entry RGB tables. */
+function ramp(stops) {
+  const lut = new Uint8ClampedArray(256 * 3);
+  for (let i = 0; i < 256; i++) {
+    const t = i / 255 * (stops.length - 1), j = Math.min(stops.length - 2, Math.floor(t)), f = t - j;
+    const a = hex(stops[j]), b = hex(stops[j + 1]);
+    for (let c = 0; c < 3; c++) lut[i * 3 + c] = a[c] + (b[c] - a[c]) * f;
+  }
+  return lut;
+}
+const DIV = ramp(['#c9dcf7', '#4f8fe8', '#1f3a66', '#15181b', '#6a2a22', '#e8604c', '#f7cfc2']);
+const HEAT = ramp(['#0f1113', '#2a1630', '#6b1f3c', '#b5383a', '#e57a35', '#f4c566', '#fbf1d9']);
+
+/* Iterative radix-2 complex FFT, in place. */
+function makeFFT(n) {
+  const L = Math.round(Math.log2(n)), rev = new Uint32Array(n);
+  for (let i = 0; i < n; i++) { let r = 0; for (let b = 0; b < L; b++) r |= ((i >> b) & 1) << (L - 1 - b); rev[i] = r; }
+  const cs = new Float64Array(n / 2), sn = new Float64Array(n / 2);
+  for (let i = 0; i < n / 2; i++) { cs[i] = Math.cos(TAU * i / n); sn[i] = Math.sin(TAU * i / n); }
+  return (re, im, inv) => {
+    for (let i = 0; i < n; i++) {
+      const j = rev[i];
+      if (j > i) { let t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; }
+    }
+    for (let size = 2; size <= n; size <<= 1) {
+      const half = size >> 1, step = n / size;
+      for (let i = 0; i < n; i += size) {
+        for (let j = 0, k = 0; j < half; j++, k += step) {
+          const wr = cs[k], wi = inv ? sn[k] : -sn[k], a = i + j, b = a + half;
+          const tr = re[b] * wr - im[b] * wi, ti = re[b] * wi + im[b] * wr;
+          re[b] = re[a] - tr; im[b] = im[a] - ti; re[a] += tr; im[a] += ti;
+        }
+      }
+    }
+  };
+}
+function make2D(n) {
+  const f = makeFFT(n), tr = new Float64Array(n), ti = new Float64Array(n);
+  return (re, im, inv) => {
+    for (let y = 0; y < n; y++) {
+      const o = y * n;
+      for (let x = 0; x < n; x++) { tr[x] = re[o + x]; ti[x] = im[o + x]; }
+      f(tr, ti, inv);
+      for (let x = 0; x < n; x++) { re[o + x] = tr[x]; im[o + x] = ti[x]; }
+    }
+    for (let x = 0; x < n; x++) {
+      for (let y = 0; y < n; y++) { tr[y] = re[y * n + x]; ti[y] = im[y * n + x]; }
+      f(tr, ti, inv);
+      for (let y = 0; y < n; y++) { re[y * n + x] = tr[y]; im[y * n + x] = ti[y]; }
+    }
+    if (inv) { const s = 1 / (n * n); for (let i = 0; i < n * n; i++) { re[i] *= s; im[i] *= s; } }
+  };
+}
+function rng(seed) {
+  return () => {
+    seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+/* ---------------------------------------------------------------- physics --
+   Planar layers over cortex. A spatial harmonic cos(kx) of potential is held
+   at the cortical surface; no current leaves the scalp into air. Laplace's
+   equation in each layer gives cosh/sinh in z; potential and normal current
+   are continuous at every interface. Integrating down from the scalp keeps
+   every term positive, so large k never cancels catastrophically.
+   Layers are listed cortex → scalp as {h: mm, s: S/m}. */
+const Layers = {
+  CSF:   { h: 1.5, s: 1.79 },
+  SCALP: { h: 6,   s: 0.43 },
+  make(skullMM, rho, breach, scalpMM = Layers.SCALP.h) {
+    // breach: the bone is gone and the scalp settles onto the CSF
+    return [Layers.CSF, { h: breach ? 0 : skullMM, s: Layers.SCALP.s / rho }, { h: scalpMM, s: Layers.SCALP.s }];
+  },
+};
+function transfer(k, layers) {
+  if (k < 1e-9) return 1;
+  let p = 1, J = 0;
+  for (let i = layers.length - 1; i >= 0; i--) {
+    const { h, s } = layers[i];
+    if (h <= 0) continue;
+    const c = Math.cosh(k * h), sh = Math.sinh(k * h);
+    const np = p * c - J / (s * k) * sh, nJ = J * c - s * k * p * sh;
+    p = np; J = nJ;
+  }
+  return 1 / p;
+}
+
+/* ========================================================================
+   01 · SONG
+   ======================================================================== */
+const M1 = (() => {
+  const play = $('m1-play'), file = $('m1-file'), srcName = $('m1-src');
+  const sl = $('m1-skull'), slv = $('m1-skull-v'), brBtn = $('m1-breach');
+  const cvSpec = $('m1-spec'), cvGram = $('m1-sgram'), sec = $('m1');
+
+  const CUT_HI = 16000, CUT_LO = 90, BR_MULT = 12, G_INT = 0.5, G_BR = 1.0;
+  const F0 = 30, F1 = 16000;
+  let pos = +sl.value, breach = false;
+  let ac = null, g = null, buf = null, node = null, playing = false, t0 = 0, off = 0;
+
+  const cut = () => CUT_HI * Math.pow(CUT_LO / CUT_HI, pos);
+  const brCut = () => Math.min(20000, cut() * BR_MULT);
+  // two cascaded Butterworth sections
+  const resp = (f, fc) => 1 / (1 + Math.pow(f / fc, 4));
+  const fmtHz = f => f >= 1000 ? (f / 1000).toFixed(f >= 10000 ? 0 : 1) + ' kHz' : Math.round(f) + ' Hz';
+
+  function ui() {
+    slv.textContent = fmtHz(cut());
+    brBtn.setAttribute('aria-pressed', breach);
+    play.textContent = playing ? '❚❚ Pause' : '▶ Play';
+  }
+
+  /* ---- built-in loop, rendered offline once ---- */
+  async function renderLoop() {
+    const sr = 44100, bpm = 108, beat = 60 / bpm, bars = 8, dur = bars * 4 * beat;
+    const oc = new OfflineAudioContext(2, Math.ceil(sr * dur), sr);
+    const out = oc.createGain(); out.gain.value = 0.6; out.connect(oc.destination);
+    const noise = oc.createBuffer(1, sr, sr), nd = noise.getChannelData(0);
+    for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+    const hz = m => 440 * Math.pow(2, (m - 69) / 12);
+    const env = (param, t, a, peak, d) => {
+      param.setValueAtTime(0.0001, t);
+      param.exponentialRampToValueAtTime(peak, t + a);
+      param.exponentialRampToValueAtTime(0.0001, t + a + d);
+    };
+    const pan = v => { const p = oc.createStereoPanner(); p.pan.value = v; p.connect(out); return p; };
+    const C0 = pan(0), CL = pan(-0.35), CR = pan(0.35);
+
+    function kick(t) {
+      const o = oc.createOscillator(), gg = oc.createGain();
+      o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(44, t + 0.12);
+      env(gg.gain, t, 0.003, 1.0, 0.38);
+      o.connect(gg).connect(C0); o.start(t); o.stop(t + 0.45);
+    }
+    function hit(t, d, type, f, q, gain, dest) {
+      const s = oc.createBufferSource(), fl = oc.createBiquadFilter(), gg = oc.createGain();
+      s.buffer = noise; fl.type = type; fl.frequency.value = f; fl.Q.value = q;
+      env(gg.gain, t, 0.002, gain, d);
+      s.connect(fl).connect(gg).connect(dest); s.start(t, Math.random() * 0.5); s.stop(t + d + 0.02);
+    }
+    function snare(t) {
+      hit(t, 0.2, 'bandpass', 2000, 0.7, 0.8, C0);
+      hit(t, 0.12, 'highpass', 5000, 0.7, 0.35, C0);
+      const o = oc.createOscillator(), gg = oc.createGain();
+      o.type = 'triangle'; o.frequency.value = 190; env(gg.gain, t, 0.002, 0.5, 0.09);
+      o.connect(gg).connect(C0); o.start(t); o.stop(t + 0.12);
+    }
+    function tone(t, f, d, type, gain, cutoff, dest, a = 0.005) {
+      const o = oc.createOscillator(), fl = oc.createBiquadFilter(), gg = oc.createGain();
+      o.type = type; o.frequency.value = f; fl.type = 'lowpass'; fl.frequency.value = cutoff;
+      env(gg.gain, t, a, gain, d);
+      o.connect(fl).connect(gg).connect(dest); o.start(t); o.stop(t + a + d + 0.05);
+    }
+    // Am  F  C  G
+    const chords = [[57, 60, 64], [53, 57, 60], [55, 60, 64], [55, 59, 62]];
+    const roots = [33, 29, 36, 31];
+    const bells = [76, 79, 81, 79, 76, 74, 72, 74];
+    for (let bar = 0; bar < bars; bar++) {
+      const tb = bar * 4 * beat, ch = chords[bar % 4], root = roots[bar % 4];
+      for (let b = 0; b < 4; b++) {
+        const t = tb + b * beat;
+        kick(t); if (bar % 2 && b === 3) kick(t + beat / 2);
+        if (b % 2) snare(t);
+      }
+      for (let s = 0; s < 16; s++) {
+        const t = tb + s * beat / 4;
+        hit(t, s % 4 === 2 ? 0.16 : 0.035, 'highpass', 8500, 0.7, s % 2 ? 0.22 : 0.34, s % 2 ? CR : CL);
+        const note = ch[s % 3] + 12 + (s % 6 < 3 ? 0 : 12);
+        tone(t, hz(note), 0.13, 'square', 0.07, 5200, s % 2 ? CL : CR);
+      }
+      for (let e = 0; e < 8; e++) {
+        const t = tb + e * beat / 2;
+        tone(t, hz(root + (e === 7 ? 12 : 0)), 0.22, 'sawtooth', 0.45, 520, C0);
+      }
+      for (const m of ch) for (const det of [-7, 7]) {
+        const o = oc.createOscillator(), fl = oc.createBiquadFilter(), gg = oc.createGain();
+        o.type = 'sawtooth'; o.frequency.value = hz(m); o.detune.value = det;
+        fl.type = 'lowpass'; fl.frequency.value = 2400;
+        gg.gain.setValueAtTime(0.0001, tb);
+        gg.gain.exponentialRampToValueAtTime(0.035, tb + 0.4);
+        gg.gain.setValueAtTime(0.035, tb + 4 * beat - 0.3);
+        gg.gain.exponentialRampToValueAtTime(0.0001, tb + 4 * beat);
+        o.connect(fl).connect(gg).connect(C0); o.start(tb); o.stop(tb + 4 * beat + 0.05);
+      }
+      if (bar >= 4) for (let q = 0; q < 2; q++) {
+        const t = tb + q * 2 * beat, m = bells[(bar - 4) * 2 + q];
+        tone(t, hz(m), 1.2, 'sine', 0.16, 20000, CR, 0.004);
+        tone(t, hz(m) * 3.01, 0.5, 'sine', 0.05, 20000, CR, 0.004);
+      }
+    }
+    const b = await oc.startRendering();
+    let peak = 0;
+    for (let c = 0; c < b.numberOfChannels; c++) for (const v of b.getChannelData(c)) peak = Math.max(peak, Math.abs(v));
+    for (let c = 0; c < b.numberOfChannels; c++) { const d = b.getChannelData(c); for (let i = 0; i < d.length; i++) d[i] *= 0.9 / peak; }
+    return b;
+  }
+
+  /* ---- live graph: two filter paths, cross-faded by the breach ---- */
+  function graph() {
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+    const bus = ac.createGain(), inA = ac.createAnalyser(), outA = ac.createAnalyser();
+    for (const a of [inA, outA]) { a.fftSize = 8192; a.smoothingTimeConstant = 0.72; }
+    const path = () => {
+      const a = ac.createBiquadFilter(), b = ac.createBiquadFilter(), k = ac.createGain();
+      a.type = b.type = 'lowpass'; a.Q.value = b.Q.value = Math.SQRT1_2;
+      bus.connect(a); a.connect(b); b.connect(k); return { a, b, k };
+    };
+    const P = path(), B = path(), sum = ac.createGain();
+    P.k.connect(sum); B.k.connect(sum);
+    bus.connect(inA); sum.connect(outA); sum.connect(ac.destination);
+    g = { bus, inA, outA, P, B, din: new Float32Array(inA.frequencyBinCount), dout: new Float32Array(outA.frequencyBinCount) };
+    apply(true);
+  }
+  function apply(now) {
+    if (!g) return;
+    const t = ac.currentTime, tc = now ? 0.001 : 0.025;
+    for (const f of [g.P.a, g.P.b]) f.frequency.setTargetAtTime(cut(), t, tc);
+    for (const f of [g.B.a, g.B.b]) f.frequency.setTargetAtTime(brCut(), t, tc);
+    g.P.k.gain.setTargetAtTime(breach ? 0 : G_INT, t, now ? 0.001 : 0.04);
+    g.B.k.gain.setTargetAtTime(breach ? G_BR : 0, t, now ? 0.001 : 0.04);
+  }
+  function start(o) {
+    node = ac.createBufferSource(); node.buffer = buf; node.loop = true;
+    node.connect(g.bus); node.start(0, o); t0 = ac.currentTime - o; playing = true;
+  }
+  function stop() {
+    if (!node) return;
+    off = (ac.currentTime - t0) % buf.duration;
+    node.stop(); node.disconnect(); node = null; playing = false;
+  }
+  async function toggle() {
+    if (!buf) return;
+    if (!ac) graph();
+    if (ac.state === 'suspended') await ac.resume();
+    playing ? stop() : start(off);
+    ui();
+  }
+  async function load(f) {
+    if (!f) return;
+    srcName.textContent = f.name;
+    if (!ac) graph();
+    if (ac.state === 'suspended') await ac.resume();
+    try {
+      const b = await ac.decodeAudioData(await f.arrayBuffer());
+      stop(); buf = b; off = 0; start(0); play.disabled = false; ui();
+    } catch (e) { srcName.textContent = 'could not decode ' + f.name; }
+  }
+
+  play.addEventListener('click', toggle);
+  file.addEventListener('change', () => load(file.files[0]));
+  sec.addEventListener('dragover', e => { e.preventDefault(); sec.classList.add('drop'); });
+  sec.addEventListener('dragleave', e => { if (e.target === sec) sec.classList.remove('drop'); });
+  sec.addEventListener('drop', e => { e.preventDefault(); sec.classList.remove('drop'); load(e.dataTransfer.files[0]); });
+  sl.addEventListener('input', () => { pos = +sl.value; apply(); ui(); });
+  brBtn.addEventListener('click', () => { breach = !breach; apply(); ui(); });
+  renderLoop().then(b => { buf = buf || b; play.disabled = false; ui(); });
+  ui();
+
+  /* ---- drawing ---- */
+  const LX0 = Math.log10(F0), LX1 = Math.log10(F1);
+  const DB0 = -110, DB1 = -20, GDB = -60;
+  function binVal(d, f0, f1) {
+    const hzPer = ac.sampleRate / (2 * d.length);
+    let a = f0 / hzPer, b = f1 / hzPer;
+    if (b - a < 1) {
+      const i = Math.floor(a), fr = a - i;
+      return d[i] + (d[Math.min(d.length - 1, i + 1)] - d[i]) * fr;
+    }
+    let m = -Infinity;
+    for (let i = Math.floor(a); i <= Math.ceil(b) && i < d.length; i++) m = Math.max(m, d[i]);
+    return m;
+  }
+
+  let dragging = false;
+  function setFromX(clientX) {
+    const r = cvSpec.getBoundingClientRect(), L = 40, R = 44, pw = r.width - L - R;
+    const f = Math.pow(10, LX0 + clamp((clientX - r.left - L) / pw, 0, 1) * (LX1 - LX0));
+    pos = clamp(Math.log(f / CUT_HI) / Math.log(CUT_LO / CUT_HI), 0, 1);
+    sl.value = pos; apply(); ui();
+  }
+  cvSpec.addEventListener('pointerdown', e => { dragging = true; cvSpec.setPointerCapture(e.pointerId); setFromX(e.clientX); });
+  cvSpec.addEventListener('pointermove', e => { if (dragging) setFromX(e.clientX); });
+  cvSpec.addEventListener('pointerup', () => dragging = false);
+  cvSpec.style.cursor = 'ew-resize';
+  cvSpec.style.touchAction = 'none';
+
+  function drawSpec() {
+    const { x, w, h } = fit(cvSpec);
+    x.clearRect(0, 0, w, h);
+    const L = 40, R = 44, T = 28, B = 26, pw = w - L - R, ph = h - T - B;
+    const fx = f => L + (Math.log10(f) - LX0) / (LX1 - LX0) * pw;
+    const xf = px => Math.pow(10, LX0 + (px - L) / pw * (LX1 - LX0));
+    const dy = db => T + (DB1 - db) / (DB1 - DB0) * ph;
+    const gy = gdb => T + clamp(gdb / GDB, 0, 1.08) * ph;
+
+    x.strokeStyle = C.line2; x.lineWidth = 1;
+    for (const f of [50, 100, 200, 500, 1000, 2000, 5000, 10000]) {
+      const px = Math.round(fx(f)) + .5;
+      x.beginPath(); x.moveTo(px, T); x.lineTo(px, T + ph); x.stroke();
+      label(x, f >= 1000 ? f / 1000 + 'k' : '' + f, px, h - 9, C.ink4, 'center');
+    }
+    for (const gdb of [0, -20, -40, -60]) {
+      const py = Math.round(gy(gdb)) + .5;
+      x.beginPath(); x.moveTo(L, py); x.lineTo(L + pw, py); x.stroke();
+      label(x, gdb + ' dB', L + pw + 6, py + 3, C.ink4);
+    }
+    label(x, 'Hz', L - 8, h - 9, C.ink4, 'right');
+
+    if (g && playing) {
+      g.inA.getFloatFrequencyData(g.din);
+      g.outA.getFloatFrequencyData(g.dout);
+      const trace = (d, fill, stroke, lw) => {
+        x.beginPath(); x.moveTo(L, T + ph);
+        for (let px = L; px <= L + pw; px += 2) {
+          const v = binVal(d, xf(px), xf(px + 2));
+          x.lineTo(px, clamp(dy(isFinite(v) ? v : DB0), T, T + ph));
+        }
+        x.lineTo(L + pw, T + ph); x.closePath();
+        if (fill) { x.fillStyle = fill; x.fill(); }
+        if (stroke) { x.strokeStyle = stroke; x.lineWidth = lw; x.stroke(); }
+      };
+      trace(g.din, 'rgba(232,230,225,0.07)', 'rgba(232,230,225,0.22)', 1);
+      trace(g.dout, 'rgba(232,230,225,0.16)', C.ink1, 1.4);
+    }
+
+    // filter curves: gain axis on the right, 0 dB at top
+    const curve = (fc, gain, color, active) => {
+      x.beginPath();
+      for (let px = L; px <= L + pw; px += 2) {
+        const gdb = 20 * Math.log10(resp(xf(px), fc) * gain);
+        px === L ? x.moveTo(px, gy(gdb)) : x.lineTo(px, gy(gdb));
+      }
+      x.setLineDash(active ? [] : [4, 4]);
+      x.globalAlpha = active ? 1 : 0.45;
+      x.strokeStyle = color; x.lineWidth = active ? 2 : 1.2; x.stroke();
+      x.setLineDash([]); x.globalAlpha = 1;
+    };
+    x.save(); x.beginPath(); x.rect(L, T - 4, pw, ph + 8); x.clip();
+    curve(brCut(), G_BR, C.breach, breach);
+    curve(cut(), G_INT, C.bone, !breach);
+    x.restore();
+
+    const fc = breach ? brCut() : cut(), gain = breach ? G_BR : G_INT;
+    const hx = fx(clamp(fc, F0, F1)), hy = gy(20 * Math.log10(0.5 * gain));
+    x.beginPath(); x.arc(hx, hy, 5, 0, TAU); x.fillStyle = breach ? C.breach : C.bone; x.fill();
+    label(x, fmtHz(fc), clamp(hx, L + 30, L + pw - 30), T - 8, breach ? C.breach : C.bone, 'center');
+  }
+
+  const GW = 480, GH = 220;
+  const gram = document.createElement('canvas'); gram.width = GW; gram.height = GH;
+  const gx = gram.getContext('2d'); gx.fillStyle = '#0f1113'; gx.fillRect(0, 0, GW, GH);
+  const col = gx.createImageData(1, GH);
+  const rowF = Float64Array.from({ length: GH + 1 }, (_, r) => Math.pow(10, LX1 - r / GH * (LX1 - LX0)));
+
+  let gAcc = 0;
+  function drawGram(dt) {
+    gAcc += dt * 50;                       // columns per second
+    const step = Math.floor(gAcc); gAcc -= step;
+    if (g && playing && step > 0) {
+      gx.drawImage(gram, -step, 0);
+      gx.fillStyle = '#0f1113'; gx.fillRect(GW - step, 0, step, GH);
+      for (let r = 0; r < GH; r++) {
+        const v = binVal(g.dout, rowF[r + 1], rowF[r]);
+        const i = clamp(Math.round(((isFinite(v) ? v : DB0) - (-105)) / 80 * 255), 0, 255) * 3;
+        col.data[r * 4] = HEAT[i]; col.data[r * 4 + 1] = HEAT[i + 1]; col.data[r * 4 + 2] = HEAT[i + 2]; col.data[r * 4 + 3] = 255;
+      }
+      for (let c = 1; c <= step; c++) gx.putImageData(col, GW - c, 0);
+    }
+    const { x, w, h } = fit(cvGram);
+    const L = 40, R = 12, T = 28, B = 26, pw = w - L - R, ph = h - T - B;
+    x.clearRect(0, 0, w, h);
+    x.imageSmoothingEnabled = true;
+    x.drawImage(gram, L, T, pw, ph);
+    const fy = f => T + (LX1 - Math.log10(f)) / (LX1 - LX0) * ph;
+    for (const f of [100, 1000, 10000]) label(x, f >= 1000 ? f / 1000 + 'k' : '' + f, L - 6, fy(f) + 3, C.ink4, 'right');
+    const fc = breach ? brCut() : cut();
+    if (fc < F1) {
+      const py = Math.round(fy(fc)) + .5;
+      x.setLineDash([5, 4]); x.strokeStyle = breach ? C.breach : C.bone; x.lineWidth = 1;
+      x.beginPath(); x.moveTo(L, py); x.lineTo(L + pw, py); x.stroke(); x.setLineDash([]);
+    }
+    label(x, 'time →', L + pw, h - 9, C.ink4, 'right');
+  }
+
+  return { el: sec, frame(dt) { drawSpec(); drawGram(dt); } };
+})();
+
+/* ========================================================================
+   03 · CORTEX → SCALP
+   1 px = 1 mm on a 128 mm periodic patch. Sources: broad travelling 10 Hz
+   waves, 6 Hz patches, many small 30 Hz patches. The scalp is the cortex
+   filtered by the layered transfer function, blended per-pixel between the
+   intact and breach filters by the painted mask. Electrode traces use the
+   same filters, sampled analytically at a fixed rate.
+   ======================================================================== */
+const M3 = (() => {
+  const N = 128, NN = N * N, FS = 250, BUF = 1024, WIN = 3, NS = 512, R = 3.5;
+  const sec = $('m3'), cvC = $('m3-cortex'), cvS = $('m3-scalp'), cvT = $('m3-traces'), cvF = $('m3-tf');
+  const fft2 = make2D(N), fft1 = makeFFT(NS);
+  const st = { skull: 7, scalp: 6, gain: 10, speed: 0.1, brush: 'breach', on: { slow: true, mid: true, fast: true, photic: false } };
+  const dirty = { T: true, mask: true, g: true };
+  const rand = rng(11);
+
+  /* sources */
+  const planes = [[1, 0, 9.6, 'slow'], [0, 1, 10.3, 'slow'], [1, 1, 10.9, 'slow'], [-1, 2, 9.2, 'slow'], [1, 0, 20, 'photic']].map(([cx, cy, f, g]) => {
+    const Cc = new Float32Array(NN), Ss = new Float32Array(NN);
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+      const a = TAU * (cx * x + cy * y) / N; Cc[y * N + x] = Math.cos(a); Ss[y * N + x] = Math.sin(a);
+    }
+    return { g, cx, cy, f, k: TAU * Math.hypot(cx, cy) / N, A: g === 'photic' ? 0.12 : 0.15, ph: rand() * TAU, mf: 0.12 + rand() * 0.2, mp: rand() * TAU, C: Cc, S: Ss, Ti: 0, Tb: 0 };
+  });
+  const blobs = [];
+  // surround > 0 gives a zero-mean centre–surround patch (opposing sulcal walls cancel far away)
+  function addBlobs(n, s0, s1, f0, f1, A, grp, surround) {
+    for (let i = 0; i < n; i++) {
+      const sig = s0 + rand() * (s1 - s0), r = Math.ceil(3 * sig * (surround ? 2 : 1)), dx = [], dy = [], w = [];
+      for (let oy = -r; oy <= r; oy++) for (let ox = -r; ox <= r; ox++) {
+        const d2 = ox * ox + oy * oy; if (d2 > r * r) continue;
+        let v = Math.exp(-d2 / (2 * sig * sig));
+        if (surround) v -= 0.25 * Math.exp(-d2 / (8 * sig * sig));
+        dx.push(ox); dy.push(oy); w.push(v);
+      }
+      blobs.push({ sig, x: rand() * N | 0, y: rand() * N | 0, f: f0 + rand() * (f1 - f0), A, ph: rand() * TAU,
+        mf: 0.3 + rand() * 1.2, mp: rand() * TAU, dx: Int16Array.from(dx), dy: Int16Array.from(dy), w: Float32Array.from(w), grp });
+    }
+  }
+  addBlobs(12, 6, 8, 4.5, 7, 1.1, 'mid');
+  addBlobs(160, 2.5, 3.5, 20, 38, 3.2, 'fast', true);
+  // typical wavelength of each source type: power-weighted mean spatial frequency
+  // (plane waves: their own k; Gaussian patch: 0.886/σ; centre–surround patch: spectral peak 0.961/σ)
+  const meanOf = a => a.reduce((s, v) => s + v, 0) / a.length;
+  const sigOf = g => meanOf(blobs.filter(b => b.grp === g).map(b => b.sig));
+  const LAM = {
+    slow: N / meanOf(planes.filter(p => p.g === 'slow').map(p => Math.hypot(p.cx, p.cy))),
+    photic: N / meanOf(planes.filter(p => p.g === 'photic').map(p => Math.hypot(p.cx, p.cy))),
+    mid: TAU * sigOf('mid') / 0.886,
+    fast: TAU * sigOf('fast') / 0.961,
+  };
+  const NAME = { slow: '10 Hz · wide', mid: '6 Hz · patch', fast: '30 Hz · focal', photic: '20 Hz · wide' };
+  const ampP = (p, t) => p.A * (0.65 + 0.35 * Math.sin(TAU * p.mf * t + p.mp));
+  const ampB = (b, t) => b.A * (0.55 + 0.45 * Math.sin(TAU * b.mf * t + b.mp)) * Math.sin(TAU * b.f * t + b.ph);
+
+  /* filters */
+  const Ti = new Float64Array(NN), Tb = new Float64Array(NN), psfI = new Float64Array(NN), psfB = new Float64Array(NN);
+  const re = new Float64Array(NN), im = new Float64Array(NN), src = new Float64Array(NN), scalp = new Float64Array(NN);
+  function filters() {
+    const Li = Layers.make(st.skull, 40, false, st.scalp), Lb = Layers.make(st.skull, 40, true, st.scalp);
+    const cache = new Map();
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+      const fx = x <= N / 2 ? x : x - N, fy = y <= N / 2 ? y : y - N, key = fx * fx + fy * fy;
+      let v = cache.get(key);
+      if (!v) { const k = TAU * Math.sqrt(key) / N; v = key ? [transfer(k, Li), transfer(k, Lb)] : [0, 0]; cache.set(key, v); }
+      Ti[y * N + x] = v[0]; Tb[y * N + x] = v[1];
+    }
+    for (const [T, out] of [[Ti, psfI], [Tb, psfB]]) {
+      re.set(T); im.fill(0); fft2(re, im, true); out.set(re);
+    }
+    for (const p of planes) { p.Ti = transfer(p.k, Li); p.Tb = transfer(p.k, Lb); }
+  }
+
+  /* breach mask */
+  const mask = new Float32Array(NN), blend = new Float32Array(NN), tmp = new Float32Array(NN);
+  let contour = [];
+  const els = [
+    { x: 36, y: 72, color: C.e1, name: 'E1', gb: new Float64Array(0), gp: [], kp: [], buf: new Float32Array(BUF), spec: new Float64Array(NS / 2) },
+    { x: 88, y: 56, color: C.e2, name: 'E2', gb: new Float64Array(0), gp: [], kp: [], buf: new Float32Array(BUF), spec: new Float64Array(NS / 2) },
+  ];
+  function stamp(cx, cy, r, v) {
+    for (let y = Math.floor(cy - r); y <= Math.ceil(cy + r); y++) for (let x = Math.floor(cx - r); x <= Math.ceil(cx + r); x++) {
+      if ((x - cx) ** 2 + (y - cy) ** 2 > r * r) continue;
+      mask[((y + N) & (N - 1)) * N + ((x + N) & (N - 1))] = v;
+    }
+    dirty.mask = true;
+  }
+  function resetMask() {
+    mask.fill(0); stamp(88, 56, 15, 1);
+    els[0].x = 36; els[0].y = 72; els[1].x = 88; els[1].y = 56;
+  }
+  resetMask();
+  function smooth() {
+    blend.set(mask);
+    const r = 2;
+    for (let pass = 0; pass < 2; pass++) {
+      for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+        let s = 0; for (let d = -r; d <= r; d++) s += blend[y * N + ((x + d + N) & (N - 1))];
+        tmp[y * N + x] = s / (2 * r + 1);
+      }
+      for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+        let s = 0; for (let d = -r; d <= r; d++) s += tmp[((y + d + N) & (N - 1)) * N + x];
+        blend[y * N + x] = s / (2 * r + 1);
+      }
+    }
+    // marching squares at 0.5
+    contour = [];
+    const lerp = (a, b) => (0.5 - a) / (b - a);
+    for (let y = 0; y < N - 1; y++) for (let x = 0; x < N - 1; x++) {
+      const a = blend[y * N + x], b = blend[y * N + x + 1], c = blend[(y + 1) * N + x + 1], d = blend[(y + 1) * N + x];
+      const pts = [];
+      if ((a > .5) !== (b > .5)) pts.push([x + lerp(a, b), y]);
+      if ((b > .5) !== (c > .5)) pts.push([x + 1, y + lerp(b, c)]);
+      if ((d > .5) !== (c > .5)) pts.push([x + lerp(d, c), y + 1]);
+      if ((a > .5) !== (d > .5)) pts.push([x, y + lerp(a, d)]);
+      if (pts.length >= 2) contour.push(pts[0][0], pts[0][1], pts[1][0], pts[1][1]);
+      if (pts.length === 4) contour.push(pts[2][0], pts[2][1], pts[3][0], pts[3][1]);
+    }
+  }
+
+  /* electrode gains: each source's filtered footprint at the electrode */
+  function gains() {
+    for (const e of els) {
+      const m = blend[e.y * N + e.x];
+      e.gb = new Float64Array(blobs.length);
+      blobs.forEach((b, i) => {
+        let s = 0;
+        for (let j = 0; j < b.w.length; j++) {
+          const idx = ((b.y + b.dy[j] - e.y + 2 * N) & (N - 1)) * N + ((b.x + b.dx[j] - e.x + 2 * N) & (N - 1));
+          s += b.w[j] * ((1 - m) * psfI[idx] + m * psfB[idx]);
+        }
+        e.gb[i] = s;
+      });
+      e.gp = planes.map(p => (1 - m) * p.Ti + m * p.Tb);
+      e.kp = planes.map(p => TAU * (p.cx * e.x + p.cy * e.y) / N);
+    }
+  }
+  function sampleAt(e, t) {
+    let v = 0;
+    planes.forEach((p, i) => { if (st.on[p.g]) v += ampP(p, t) * e.gp[i] * Math.cos(e.kp[i] - (TAU * p.f * t + p.ph)); });
+    for (let i = 0; i < blobs.length; i++) if (st.on[blobs[i].grp]) v += e.gb[i] * ampB(blobs[i], t);
+    return v;
+  }
+
+  /* field */
+  function build(t) {
+    src.fill(0);
+    for (const p of planes) {
+      if (!st.on[p.g]) continue;
+      const a = ampP(p, t), th = TAU * p.f * t + p.ph, ca = a * Math.cos(th), sa = a * Math.sin(th);
+      for (let i = 0; i < NN; i++) src[i] += ca * p.C[i] + sa * p.S[i];
+    }
+    for (const b of blobs) {
+      if (!st.on[b.grp]) continue;
+      const v = ampB(b, t);
+      for (let j = 0; j < b.w.length; j++)
+        src[((b.y + b.dy[j] + N) & (N - 1)) * N + ((b.x + b.dx[j] + N) & (N - 1))] += v * b.w[j];
+    }
+    re.set(src); im.fill(0);
+    fft2(re, im, false);
+    // both filters in one inverse: real part = intact, imaginary = breach
+    for (let i = 0; i < NN; i++) {
+      const sr = re[i], si = im[i];
+      re[i] = sr * Ti[i] - si * Tb[i];
+      im[i] = si * Ti[i] + sr * Tb[i];
+    }
+    fft2(re, im, true);
+    for (let i = 0; i < NN; i++) scalp[i] = (1 - blend[i]) * re[i] + blend[i] * im[i];
+  }
+
+  /* controls */
+  const sSk = $('m3-skull'), sSc = $('m3-soft'), sGain = $('m3-gain');
+  function read() {
+    st.skull = +sSk.value; st.scalp = +sSc.value; st.gain = Math.pow(10, +sGain.value / 1000 * 2);
+    $('m3-skull-v').textContent = st.skull.toFixed(1) + ' mm';
+    $('m3-soft-v').textContent = st.scalp.toFixed(1) + ' mm';
+    $('m3-gain-v').textContent = '×' + (st.gain < 10 ? st.gain.toFixed(1) : Math.round(st.gain));
+    $('m3-scalp-cap').textContent = 'scalp  ×' + (st.gain < 10 ? st.gain.toFixed(1) : Math.round(st.gain));
+  }
+  for (const el of [sSk, sSc]) el.addEventListener('input', () => { read(); dirty.T = true; });
+  sGain.addEventListener('input', read);
+  read();
+  const segs = (id, attr, fn) => {
+    const btns = [...$(id).querySelectorAll('button')];
+    btns.forEach(b => b.addEventListener('click', () => fn(b, btns)));
+  };
+  segs('m3-src', 'g', b => { const k = b.dataset.g; st.on[k] = !st.on[k]; b.setAttribute('aria-pressed', st.on[k]); });
+  segs('m3-brush', 'b', (b, all) => { st.brush = b.dataset.b; all.forEach(x => x.setAttribute('aria-pressed', x === b)); });
+  segs('m3-speed', 's', (b, all) => { st.speed = +b.dataset.s; all.forEach(x => x.setAttribute('aria-pressed', x === b)); });
+  $('m3-reset').addEventListener('click', () => { resetMask(); dirty.g = true; });
+
+  /* pointer: drag electrodes, otherwise paint */
+  for (const cv of [cvC, cvS]) {
+    let mode = null, target = null;
+    const grid = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * N, (e.clientY - r.top) / r.height * N, r.width / N]; };
+    const hit = (gx, gy, s) => els.find(el => Math.hypot(el.x + .5 - gx, el.y + .5 - gy) * s < 12);
+    cv.addEventListener('pointerdown', e => {
+      const [gx, gy, s] = grid(e);
+      cv.setPointerCapture(e.pointerId);
+      target = hit(gx, gy, s);
+      mode = target ? 'drag' : 'paint';
+      move(e);
+    });
+    const move = e => {
+      const [gx, gy, s] = grid(e);
+      if (!mode) { cv.style.cursor = hit(gx, gy, s) ? 'grab' : 'crosshair'; return; }
+      if (mode === 'drag') {
+        target.x = clamp(Math.floor(gx), 0, N - 1); target.y = clamp(Math.floor(gy), 0, N - 1); dirty.g = true;
+      } else stamp(gx, gy, 6, st.brush === 'breach' ? 1 : 0);
+    };
+    cv.addEventListener('pointermove', move);
+    cv.addEventListener('pointerup', () => { mode = null; target = null; });
+  }
+
+  /* drawing */
+  const offC = document.createElement('canvas'), offS = document.createElement('canvas');
+  offC.width = offS.width = offC.height = offS.height = N;
+  const ictx = offC.getContext('2d'), sctx = offS.getContext('2d');
+  const imgC = ictx.createImageData(N, N), imgS = sctx.createImageData(N, N);
+  function paint(img, ctx, arr, range) {
+    const d = img.data;
+    for (let i = 0; i < NN; i++) {
+      const j = clamp(Math.round((arr[i] / range * 0.5 + 0.5) * 255), 0, 255) * 3;
+      d[i * 4] = DIV[j]; d[i * 4 + 1] = DIV[j + 1]; d[i * 4 + 2] = DIV[j + 2]; d[i * 4 + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+  function drawMap(cv, off, strong) {
+    const { x, w, h } = fit(cv);
+    x.imageSmoothingEnabled = true;
+    x.drawImage(off, 0, 0, w, h);
+    const s = w / N;
+    x.beginPath();
+    for (let i = 0; i < contour.length; i += 4) {
+      x.moveTo((contour[i] + .5) * s, (contour[i + 1] + .5) * s);
+      x.lineTo((contour[i + 2] + .5) * s, (contour[i + 3] + .5) * s);
+    }
+    x.strokeStyle = C.breach; x.lineWidth = strong ? 1.6 : 1; x.globalAlpha = strong ? 1 : 0.5; x.stroke(); x.globalAlpha = 1;
+    for (const e of els) {
+      const ex = (e.x + .5) * s, ey = (e.y + .5) * s;
+      x.beginPath(); x.arc(ex, ey, 7, 0, TAU);
+      x.lineWidth = 2; x.strokeStyle = '#0f1113'; x.stroke();
+      x.lineWidth = 1.5; x.strokeStyle = e.color; x.stroke();
+      label(x, e.name, ex + 10, ey - 8, e.color);
+    }
+  }
+
+  const ser = new Float64Array(NS), sei = new Float64Array(NS);
+  const hann = Float64Array.from({ length: NS }, (_, i) => 0.5 - 0.5 * Math.cos(TAU * i / (NS - 1)));
+  let top = null;
+  function spectra() {
+    let peak = -Infinity;
+    for (const e of els) {
+      for (let i = 0; i < NS; i++) { ser[i] = e.buf[(head - NS + i + BUF) % BUF] * hann[i]; sei[i] = 0; }
+      fft1(ser, sei, false);
+      for (let i = 1; i < NS / 2; i++) {
+        const p = 10 * Math.log10(ser[i] * ser[i] + sei[i] * sei[i] + 1e-14);
+        e.spec[i] = e.spec[i] ? e.spec[i] * 0.8 + p * 0.2 : p;
+        if (i * FS / NS > 2 && i * FS / NS < 48) peak = Math.max(peak, e.spec[i]);
+      }
+    }
+    top = top === null ? peak + 3 : top + (peak + 3 - top) * 0.05;
+  }
+
+  function drawTraces() {
+    const { x, w, h } = fit(cvT);
+    x.clearRect(0, 0, w, h);
+    const L = 34, Rm = 12, pw = w - L - Rm;
+    const rowH = h * 0.28, specT = rowH * 2 + 28, specH = h - specT - 26;
+    const unit = (rowH * 0.42) / (R / st.gain);
+    const n = WIN * FS;
+    els.forEach((e, k) => {
+      const mid = 16 + rowH * k + rowH / 2;
+      x.strokeStyle = C.line2; x.lineWidth = 1;
+      x.beginPath(); x.moveTo(L, mid + .5); x.lineTo(L + pw, mid + .5); x.stroke();
+      label(x, e.name, 8, mid + 3, e.color);
+      x.save(); x.beginPath(); x.rect(L, mid - rowH / 2, pw, rowH); x.clip();
+      x.beginPath();
+      for (let i = 0; i < n; i++) {
+        const v = e.buf[(head - n + i + BUF) % BUF];
+        const px = L + i / (n - 1) * pw, py = mid - v * unit;
+        i ? x.lineTo(px, py) : x.moveTo(px, py);
+      }
+      x.strokeStyle = e.color; x.lineWidth = 1.3; x.stroke();
+      x.restore();
+    });
+    // time bar
+    const s1 = pw / WIN;
+    x.strokeStyle = C.ink3; x.lineWidth = 1;
+    x.beginPath(); x.moveTo(L + pw - s1, 16 + rowH * 2 + 4.5); x.lineTo(L + pw, 16 + rowH * 2 + 4.5); x.stroke();
+    label(x, '1 s', L + pw - s1 / 2, 16 + rowH * 2 + 16, C.ink3, 'center');
+
+    // overlaid power spectra
+    const F1 = 48, DR = 45;
+    const sx = f => L + f / F1 * pw, sy = db => specT + clamp((top - db) / DR, 0, 1) * specH;
+    x.strokeStyle = C.line2;
+    for (const f of [10, 20, 30, 40]) {
+      const p = Math.round(sx(f)) + .5;
+      x.beginPath(); x.moveTo(p, specT); x.lineTo(p, specT + specH); x.stroke();
+      label(x, '' + f, p, specT + specH + 14, C.ink4, 'center');
+    }
+    label(x, 'Hz', L + pw, specT + specH + 14, C.ink4, 'right');
+    label(x, 'power', L, specT - 6, C.ink4);
+    x.beginPath(); x.moveTo(L, specT + specH + .5); x.lineTo(L + pw, specT + specH + .5); x.stroke();
+    for (const e of els) {
+      x.beginPath(); x.moveTo(sx(0), specT + specH);
+      for (let i = 1; i < NS / 2; i++) {
+        const f = i * FS / NS; if (f > F1) break;
+        x.lineTo(sx(f), sy(e.spec[i]));
+      }
+      x.lineTo(sx(F1), specT + specH); x.closePath();
+      x.globalAlpha = 0.18; x.fillStyle = e.color; x.fill(); x.globalAlpha = 1;
+      x.strokeStyle = e.color; x.lineWidth = 1.4; x.stroke();
+    }
+  }
+
+  const LG0 = Math.log(200), LG1 = Math.log(2), YD = 4;
+  function drawTF() {
+    const { x, w, h } = fit(cvF);
+    x.clearRect(0, 0, w, h);
+    const L = 56, Rm = 16, T = 30, B = 28, pw = w - L - Rm, ph = h - T - B;
+    const lx = lam => L + (Math.log(lam) - LG0) / (LG1 - LG0) * pw;
+    const xl = px => Math.exp(LG0 + (px - L) / pw * (LG1 - LG0));
+    const ty = v => T + clamp(-Math.log10(Math.max(v, 1e-9)) / YD, 0, 1.04) * ph;
+    x.strokeStyle = C.line2; x.lineWidth = 1;
+    for (const lam of [100, 30, 10, 3]) {
+      const px = Math.round(lx(lam)) + .5;
+      x.beginPath(); x.moveTo(px, T); x.lineTo(px, T + ph); x.stroke();
+      label(x, '' + lam, px, h - 10, C.ink4, 'center');
+    }
+    label(x, 'λ mm', L + pw, h - 10, C.ink4, 'right');
+    ['100%', '10%', '1%', '0.1%', '0.01%'].forEach((s, i) => {
+      const py = Math.round(T + i / YD * ph) + .5;
+      x.beginPath(); x.moveTo(L, py); x.lineTo(L + pw, py); x.stroke();
+      label(x, s, L - 6, py + 3, C.ink4, 'right');
+    });
+    const Li = Layers.make(st.skull, 40, false, st.scalp), Lb = Layers.make(st.skull, 40, true, st.scalp);
+    x.save(); x.beginPath(); x.rect(L, T - 6, pw, ph + 12); x.clip();
+    for (const [Ls, color] of [[Lb, C.breach], [Li, C.bone]]) {
+      x.beginPath();
+      for (let px = L; px <= L + pw; px += 2) {
+        const py = ty(transfer(TAU / xl(px), Ls));
+        px === L ? x.moveTo(px, py) : x.lineTo(px, py);
+      }
+      x.strokeStyle = color; x.lineWidth = 2; x.stroke();
+    }
+    for (const g of ['photic', 'slow', 'mid', 'fast']) {
+      const px = lx(LAM[g]), yi = ty(transfer(TAU / LAM[g], Li)), yb = ty(transfer(TAU / LAM[g], Lb));
+      x.globalAlpha = st.on[g] ? 1 : 0.3;
+      x.setLineDash([2, 3]); x.strokeStyle = C.ink2; x.lineWidth = 1;
+      x.beginPath(); x.moveTo(px, yi); x.lineTo(px, yb); x.stroke(); x.setLineDash([]);
+      for (const [yy, color] of [[yi, C.bone], [yb, C.breach]]) {
+        x.beginPath(); x.arc(px, yy, 5, 0, TAU);
+        x.fillStyle = color; x.fill(); x.lineWidth = 2; x.strokeStyle = C.panel; x.stroke();
+      }
+      if (g === 'photic') label(x, NAME[g], px - 9, (yi + yb) / 2 + 3, C.ink1, 'right');
+      else label(x, NAME[g], px + 9, (yi + yb) / 2 + 3, C.ink1);
+      x.globalAlpha = 1;
+    }
+    x.restore();
+    // legend
+    let lxp = L + pw - 150;
+    for (const [s, color] of [['bone', C.bone], ['breach', C.breach]]) {
+      x.strokeStyle = color; x.lineWidth = 2;
+      x.beginPath(); x.moveTo(lxp, 14.5); x.lineTo(lxp + 18, 14.5); x.stroke();
+      label(x, s, lxp + 24, 18, C.ink2);
+      lxp += 80;
+    }
+  }
+
+  let simT = 0, nextS = 0, head = 0;
+  function frame(dt) {
+    if (dirty.T) { filters(); dirty.T = false; dirty.g = true; }
+    if (dirty.mask) { smooth(); dirty.mask = false; dirty.g = true; }
+    if (dirty.g) { gains(); dirty.g = false; }
+    simT += dt * st.speed;
+    while (nextS <= simT) {
+      for (const e of els) e.buf[head] = sampleAt(e, nextS);
+      head = (head + 1) % BUF; nextS += 1 / FS;
+    }
+    build(simT);
+    paint(imgC, ictx, src, R);
+    paint(imgS, sctx, scalp, R / st.gain);
+    drawMap(cvC, offC, false);
+    drawMap(cvS, offS, true);
+    spectra();
+    drawTraces();
+    drawTF();
+  }
+  // pre-fill the trace buffer so the panel starts populated
+  filters(); smooth(); gains(); dirty.T = dirty.mask = dirty.g = false;
+  for (let i = 0; i < BUF; i++) { for (const e of els) e.buf[head] = sampleAt(e, nextS); head = (head + 1) % BUF; nextS += 1 / FS; }
+  simT = nextS;
+  spectra();
+
+  return { el: sec, frame };
+})();
+
+/* ---------------------------------------------------------------- loop -- */
+const models = [M1, M3];
+const vis = new Map(models.map(m => [m.el, true]));
+const io = new IntersectionObserver(es => es.forEach(e => vis.set(e.target, e.isIntersecting)), { rootMargin: '80px' });
+models.forEach(m => io.observe(m.el));
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  for (const m of models) if (vis.get(m.el)) m.frame(dt, now / 1000);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
