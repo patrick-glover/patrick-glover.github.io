@@ -1,11 +1,11 @@
 # Add projects here - see WORKFLOW.md for format
 - name: "tDCS visualizer"
-  url: "/epilepsy/tdcs/"
+  url: "/tdcs/"
   description: "One neuron, a patch of cortex, then a weak field that stops a seizure."
   tags: ["Neurology", "Interactive", "MedEd"]
 
 - name: "Breach rhythm EEG"
-  url: "/epilepsy/breach/"
+  url: "/breach/"
   description: "Why the skull acts as a spatial low-pass filter on cortical signals."
   tags: ["Neurology", "Interactive", "MedEd"]
 
