@@ -1,0 +1,1337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Neuro Monitor Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#0a0f13; --panel:#10181e; --panel2:#0c1318; --line:#1f2c35; --grid:#18232b;
+  --text:#dbe4ea; --muted:#7d909c; --focus:#5ec8f2;
+  --map:#ff6161; --icp:#5ec8f2; --cpp:#f2c14e; --prx:#b891ff; --cbf:#5fd39a;
+  --csf:#3f7fd6; --brain:#b58e8a; --bone:#e6dfcf; --lesion:#7d1717;
+  --good:#5fd39a; --warn:#f2c14e; --bad:#ff6161; --mca:#ff9f43;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+:root[data-theme="light"]{
+  color-scheme: light;
+  --bg:#eef2f4; --panel:#ffffff; --panel2:#f6f8f9; --line:#d3dce1; --grid:#e6ecef;
+  --text:#13202a; --muted:#566874; --focus:#1d8fc2;
+  --map:#d63a3a; --icp:#1d86b8; --cpp:#a8780a; --prx:#7447d1; --cbf:#1b8f58;
+  --csf:#3a78d4; --brain:#d7b5ae; --bone:#8c8374; --lesion:#8e1b1b;
+  --good:#1b8f58; --warn:#b07d06; --bad:#d63a3a; --mca:#d4700f;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:16px/1.5 var(--f-body);-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+/* ── top bar ── */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--bg);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;gap:16px;padding:10px 20px;max-width:1320px;margin:0 auto}
+.brand{font:700 15px/1 var(--f-display);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.brand b{color:var(--icp);font-weight:700}
+nav{display:flex;gap:2px;overflow-x:auto;flex:1;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{background:none;border:0;border-bottom:2px solid transparent;padding:6px 10px;cursor:pointer;
+  font:600 13px/1 var(--f-display);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+nav button span{font-family:var(--f-mono);font-weight:500;margin-right:6px;opacity:.7}
+nav button:hover:not(:disabled){color:var(--text)}
+nav button[aria-current="true"]{color:var(--text);border-bottom-color:var(--icp)}
+nav button:disabled{opacity:.35;cursor:default}
+.theme{background:none;border:1px solid var(--line);border-radius:4px;width:30px;height:30px;cursor:pointer;color:var(--muted);flex:none}
+
+/* ── vitals strip ── */
+.strip{display:flex;gap:0;max-width:1320px;margin:0 auto;padding:0 20px;overflow-x:auto}
+.vital{display:flex;align-items:baseline;gap:8px;padding:8px 18px 9px 0;margin-right:18px;border-right:1px solid var(--line);white-space:nowrap}
+.vital:last-child{border-right:0}
+.vital .k{font:600 11px/1 var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.vital .v{font:500 20px/1 var(--f-mono);font-variant-numeric:tabular-nums}
+.vital .u{font:400 11px/1 var(--f-mono);color:var(--muted)}
+
+/* ── chapter ── */
+main{max-width:1320px;margin:0 auto;padding-inline:20px;padding-block:28px 60px}
+.chapter{display:grid;grid-template-columns:minmax(260px,330px) minmax(0,1fr);gap:36px;align-items:start}
+.copy{position:sticky;top:calc(var(--hdr,90px) + 20px);display:flex;flex-direction:column;gap:18px}
+.eyebrow{font:600 12px/1 var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+h2{font:700 34px/1.05 var(--f-display);margin:0;text-wrap:balance;letter-spacing:-.005em}
+.lede{margin:0;color:var(--text);max-width:62ch}
+.keys{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.keys dt{font:500 13px/1.4 var(--f-mono);color:var(--text);white-space:nowrap}
+.keys dd{margin:0;font-size:14px;color:var(--muted)}
+.pearl{font-size:15px;margin:0;padding-left:12px;border-left:2px solid var(--cpp)}
+.pearl b{font:600 11px/1 var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--cpp);display:block;margin-bottom:4px}
+.pager{display:flex;gap:8px}
+.pager button{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:6px 12px;cursor:pointer;font:600 13px/1 var(--f-display);letter-spacing:.04em;text-transform:uppercase}
+.pager button:disabled{opacity:.35;cursor:default}
+
+.stage{display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px;min-width:0}
+.ptitle{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px;font:600 12px/1 var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.row{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.row.r-2-3{grid-template-columns:minmax(0,2fr) minmax(0,3fr)}
+canvas{display:block;width:100%;max-width:100%}
+.cv-sq{aspect-ratio:1/1}
+.cv-43{aspect-ratio:4/3}
+.cv-wide{aspect-ratio:16/7}
+.cv-wave{height:150px}
+.wavewrap{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center}
+.wavenum{align-items:flex-end;min-width:96px;padding-left:14px;border-left:1px solid var(--line)}
+.wavenum .u{font:400 11px/1 var(--f-mono);color:var(--muted)}
+.cv-vessel{height:120px}
+.cv-trace{height:230px}
+.cv-u{height:280px}
+.cv-krogh{height:230px}
+.cv-timeline{height:372px}
+.cv-eeg{height:110px}
+.cv-monitor{height:384px}
+.cv-u6{height:210px}
+.side-u{padding-bottom:14px;border-bottom:1px solid var(--line)}
+.clock{font:500 15px/1 var(--f-mono);font-variant-numeric:tabular-nums;color:var(--muted)}
+.monitor{display:grid;grid-template-columns:minmax(0,1fr) 132px;gap:14px;align-items:start}
+.nums{display:grid;gap:10px;padding-left:14px;border-left:1px solid var(--line)}
+.num{display:flex;flex-direction:column;gap:3px}
+.num .k{font:600 11px/1 var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.num .v{font:500 24px/1 var(--f-mono);font-variant-numeric:tabular-nums}
+.txs{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.btn[aria-pressed="true"]{border-color:var(--warn);color:var(--warn)}
+.dbgrid{display:flex;flex-wrap:wrap;gap:14px 32px}
+.sticky-ctl{position:sticky;top:calc(var(--hdr,90px) + 8px);z-index:5;box-shadow:0 6px 18px -8px rgba(0,0,0,.45)}
+.casecard{display:grid;grid-template-columns:150px minmax(0,1fr) 170px;gap:18px;align-items:start}
+.cv-ct{width:150px;height:150px;border-radius:4px}
+.cc-text{display:flex;flex-direction:column;gap:5px;font-size:15px;min-width:0}
+.cc-text p{margin:0;color:var(--muted)}
+.cc-text b{font:600 11px/1 var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--text);margin-right:6px}
+.cc-title{font:700 18px/1.2 var(--f-display);color:var(--text)}
+.cc-exam span{color:var(--text)}
+.cc-exam.changed span{color:var(--bad)}
+.labs{margin:0;display:grid;grid-template-columns:auto 1fr;gap:5px 12px;padding-left:16px;border-left:1px solid var(--line);font:500 13px/1.3 var(--f-mono)}
+.labs dt{color:var(--muted);font-family:var(--f-display);font-weight:600;font-size:11px;letter-spacing:.08em;text-transform:uppercase;align-self:center}
+.labs dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.dbtake{margin:14px 0 0;padding-top:12px;border-top:1px solid var(--line);max-width:70ch}
+.row.r-1-3{grid-template-columns:minmax(0,1fr) minmax(0,2.4fr)}
+.meters{display:grid;gap:16px}
+.meters.two{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 24px}
+.meter .mh{display:flex;align-items:baseline;gap:6px;margin-bottom:7px}
+.meter .k{font:600 11px/1 var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);flex:1}
+.meter .v{font:500 22px/1 var(--f-mono);font-variant-numeric:tabular-nums}
+.meter .u{font:400 11px/1 var(--f-mono);color:var(--muted);min-width:44px}
+.track{position:relative;height:6px;border-radius:3px;background:var(--grid)}
+.track i{position:absolute;top:0;bottom:0;opacity:.4}
+.track i:first-child{border-radius:3px 0 0 3px}.track i:last-of-type{border-radius:0 3px 3px 0}
+.track b{position:absolute;top:-5px;width:3px;height:16px;margin-left:-1.5px;background:var(--text);border-radius:2px;transition:left .25s}
+
+
+.legend{display:flex;flex-wrap:wrap;gap:12px;font:500 12px/1 var(--f-mono);color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+/* controls */
+.controls{display:flex;flex-wrap:wrap;gap:14px 26px;align-items:center}
+.ctl{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;flex:1 1 240px;min-width:0}
+.ctl label{font:600 12px/1 var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.ctl output{font:500 14px/1 var(--f-mono);font-variant-numeric:tabular-nums;min-width:74px;text-align:right}
+input[type=range]{width:100%;accent-color:var(--icp);min-width:0}
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:8px 12px;cursor:pointer;font:600 13px/1 var(--f-display);letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.btn:hover:not(:disabled){border-color:var(--muted)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn[aria-pressed="true"]{border-color:var(--warn);color:var(--warn)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:none;border:1px solid var(--line);border-radius:999px;padding:5px 12px;cursor:pointer;font:600 12px/1 var(--f-display);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.chip[aria-pressed="true"]{color:var(--bg);background:var(--text);border-color:var(--text)}
+
+/* readouts */
+.readouts{display:flex;flex-wrap:wrap;gap:10px 28px;align-items:center}
+.ro{display:flex;flex-direction:column;gap:4px}
+.ro .k{font:600 11px/1 var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.ro .v{font:500 22px/1 var(--f-mono);font-variant-numeric:tabular-nums}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;font:600 12px/1 var(--f-display);letter-spacing:.06em;text-transform:uppercase;border:1px solid currentColor}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.big{font:600 44px/1 var(--f-mono);font-variant-numeric:tabular-nums}
+.aside{font-size:14px;color:var(--muted);margin:0}
+
+/* tooltips */
+.t{border-bottom:1px dotted var(--muted);cursor:help;position:relative;white-space:nowrap}
+.t:hover::after,.t:focus::after{content:attr(data-tip);position:absolute;left:0;top:calc(100% + 6px);z-index:20;width:max-content;max-width:260px;white-space:normal;
+  background:var(--text);color:var(--bg);font:400 13px/1.35 var(--f-body);padding:7px 9px;border-radius:4px;pointer-events:none}
+
+@media (max-width:900px){
+  .chapter{grid-template-columns:1fr;gap:22px}
+  .copy{position:static}
+  .row.r-2-3,.row.r-1-3{grid-template-columns:1fr}
+  .monitor{grid-template-columns:1fr}
+  .casecard{grid-template-columns:120px minmax(0,1fr)}
+  .cv-ct{width:120px;height:120px}
+  .labs{grid-column:1/-1;padding-left:0;border-left:0;padding-top:10px;border-top:1px solid var(--line);grid-template-columns:repeat(auto-fill,minmax(70px,auto) minmax(60px,1fr))}
+  .nums{grid-template-columns:repeat(auto-fill,minmax(84px,1fr));padding-left:0;border-left:0;padding-top:12px;border-top:1px solid var(--line)}
+  h2{font-size:28px}
+}
+@media (max-width:560px){
+  .bar{padding:10px 16px;gap:10px}
+  .brand{display:none}
+  .strip{padding:0 16px}
+  main{padding-inline:16px}
+  .vital{padding-right:12px;margin-right:12px}
+  .vital .v{font-size:17px}
+  .meters.two{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}.track b{transition:none}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="bar">
+    <div class="brand">Neuro <b>Monitor</b> Lab</div>
+    <nav aria-label="Chapters">
+      <button data-go="1"><span>1</span>Pressure</button>
+      <button data-go="2"><span>2</span>Flow</button>
+      <button data-go="3"><span>3</span>PRx</button>
+      <button data-go="4"><span>4</span>Oxygen</button>
+      <button data-go="5"><span>5</span>Vasospasm</button>
+      <button data-go="6"><span>6</span>Patient</button>
+    </nav>
+    <button class="theme" id="themeBtn" aria-label="Toggle light/dark">◐</button>
+  </div>
+  <div class="strip" aria-label="Live values">
+    <div class="vital"><span class="k">MAP</span><span class="v" style="color:var(--map)" data-out="map">90</span><span class="u">mmHg</span></div>
+    <div class="vital"><span class="k">ICP</span><span class="v" style="color:var(--icp)" data-out="icp">18</span><span class="u">mmHg</span></div>
+    <div class="vital"><span class="k">CPP</span><span class="v" style="color:var(--cpp)" data-out="cpp">72</span><span class="u">mmHg</span></div>
+    <div class="vital"><span class="k">PaCO₂</span><span class="v" data-out="paco2">40</span><span class="u">mmHg</span></div>
+    <div class="vital"><span class="k">PRx</span><span class="v" style="color:var(--prx)" data-out="prx">—</span></div>
+  </div>
+</header>
+
+<main>
+
+<!-- ═════════ 1 · PRESSURE ═════════ -->
+<section class="chapter" id="ch1" data-ch="1">
+  <div class="copy">
+    <div class="eyebrow">1 · Pressure</div>
+    <h2>The skull is a closed box</h2>
+    <p class="lede">Brain, blood and CSF share a fixed volume. As a mass grows, CSF and venous blood shift out to make room. Once that reserve is spent, each extra millilitre raises <span class="t" tabindex="0" data-tip="Intracranial pressure">ICP</span> steeply.</p>
+    <dl class="keys">
+      <dt>5–15</dt><dd>Normal ICP, mmHg</dd>
+      <dt>&gt;22</dt><dd>Treat (<span class="t" tabindex="0" data-tip="Brain Trauma Foundation, 4th ed.">BTF</span>)</dd>
+      <dt>CPP</dt><dd>= MAP − ICP</dd>
+      <dt>RAP &gt;0.6</dt><dd>Reserve exhausted</dd>
+      <dt>RAP &lt;0</dt><dd>Terminal decompensation</dd>
+    </dl>
+    <p class="pearl"><b>Pearl</b>P2 rising above P1 flags poor compliance, often before mean ICP climbs.</p>
+    <div class="pager"><button disabled>◀ Prev</button><button data-next>Next ▶</button></div>
+  </div>
+
+  <div class="stage">
+    <div class="row r-2-3">
+      <div class="panel">
+        <div class="ptitle"><span>Intracranial contents</span></div>
+        <canvas id="skull" class="cv-sq"></canvas>
+        <div class="legend"><span><i style="background:var(--brain)"></i>Brain</span><span><i style="background:var(--csf)"></i>CSF</span><span><i style="background:var(--lesion)"></i>Mass</span></div>
+      </div>
+      <div class="panel">
+        <div class="ptitle"><span>Pressure–volume curve</span><span id="zone1"></span></div>
+        <canvas id="pv" class="cv-43"></canvas>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ptitle"><span>ICP waveform · <span class="t" tabindex="0" data-tip="Percussion wave — arterial pulse">P1</span> <span class="t" tabindex="0" data-tip="Tidal wave — tracks brain compliance">P2</span> <span class="t" tabindex="0" data-tip="Dicrotic wave — aortic valve closure">P3</span></span><span id="p2p1"></span></div>
+      <div class="wavewrap">
+        <canvas id="wave" class="cv-wave"></canvas>
+        <div class="ro wavenum"><span class="k">ICP</span><span class="big" style="color:var(--icp)" id="icpNum">—</span><span class="u">mmHg · 5-s mean</span></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="controls">
+        <div class="ctl"><label for="lesion1">Mass volume</label><input type="range" id="lesion1" data-bind="lesion" min="0" max="75" step="1"><output data-out="lesion"></output></div>
+        <button class="btn" id="drain">Drain 5 mL CSF</button>
+        <button class="btn" id="resetEvd">Reset</button>
+      </div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">ICP</span><span class="v" style="color:var(--icp)" data-out="icp"></span></div>
+      <div class="ro"><span class="k"><span class="t" tabindex="0" data-tip="ICP pulse amplitude, peak to trough">AMP</span></span><span class="v" data-out="amp"></span></div>
+      <div class="ro"><span class="k"><span class="t" tabindex="0" data-tip="Correlation of AMP with mean ICP. ≈0 good reserve · →+1 exhausted · &lt;0 terminal">RAP</span></span><span class="v" data-out="rap"></span></div>
+      <div class="ro"><span class="k">CPP</span><span class="v" style="color:var(--cpp)" data-out="cpp"></span></div>
+      <div class="ro"><span class="k">CSF drained</span><span class="v" data-out="drained"></span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ 2 · FLOW ═════════ -->
+<section class="chapter" id="ch2" data-ch="2" hidden>
+  <div class="copy">
+    <div class="eyebrow">2 · Flow</div>
+    <h2>Autoregulation holds flow steady</h2>
+    <p class="lede">Across a range of <span class="t" tabindex="0" data-tip="Cerebral perfusion pressure = MAP − ICP">CPP</span>, arterioles constrict and dilate to keep <span class="t" tabindex="0" data-tip="Cerebral blood flow, mL/100 g/min">CBF</span> constant. Outside that plateau, flow follows pressure.</p>
+    <dl class="keys">
+      <dt>~50</dt><dd>Normal CBF, mL/100 g/min</dd>
+      <dt>&lt;20</dt><dd>Ischemic threshold</dd>
+      <dt>50–150</dt><dd>Normal plateau, CPP mmHg</dd>
+      <dt>~3%/mmHg</dt><dd>CBF change per mmHg PaCO₂</dd>
+    </dl>
+    <p class="pearl"><b>Pearl</b>Chronic hypertension shifts the curve right. A “normal” MAP can be ischemic for that brain.</p>
+    <div class="pager"><button data-prev>◀ Prev</button><button data-next>Next ▶</button></div>
+  </div>
+
+  <div class="stage">
+    <div class="panel">
+      <div class="ptitle"><span>Lassen curve</span><span class="chips" data-presets></span></div>
+      <canvas id="lassen" class="cv-wide"></canvas>
+      <div class="legend"><span><i style="background:var(--cbf)"></i>This patient</span><span><i style="background:var(--muted)"></i>Normal</span><span><i style="background:var(--grid);outline:1px solid var(--line)"></i>Plateau (<span class="t" tabindex="0" data-tip="Lower limit of autoregulation">LLA</span>–<span class="t" tabindex="0" data-tip="Upper limit of autoregulation">ULA</span>)</span></div>
+    </div>
+    <div class="panel">
+      <div class="ptitle"><span>Arteriole</span><span id="vstate"></span></div>
+      <canvas id="vessel" class="cv-vessel"></canvas>
+    </div>
+    <div class="panel">
+      <div class="controls">
+        <div class="ctl"><label for="map2">MAP</label><input type="range" id="map2" data-bind="map" min="40" max="180" step="1"><output data-out="mapU"></output></div>
+        <div class="ctl"><label for="co2">PaCO₂</label><input type="range" id="co2" data-bind="paco2" min="20" max="65" step="1"><output data-out="paco2U"></output></div>
+      </div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">CPP</span><span class="v" style="color:var(--cpp)" data-out="cpp"></span></div>
+      <div class="ro"><span class="k">CBF</span><span class="v" style="color:var(--cbf)" data-out="cbf"></span></div>
+      <div class="ro"><span class="k">ICP</span><span class="v" style="color:var(--icp)" data-out="icp"></span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ 3 · PRx ═════════ -->
+<section class="chapter" id="ch3" data-ch="3" hidden>
+  <div class="copy">
+    <div class="eyebrow">3 · Measuring autoregulation</div>
+    <h2>PRx finds the best CPP</h2>
+    <p class="lede"><span class="t" tabindex="0" data-tip="Pressure reactivity index">PRx</span> is a moving correlation of slow waves in MAP and ICP. Reactive vessels push back: MAP up, ICP down, PRx negative. Passive vessels transmit pressure: ICP follows MAP, PRx positive.</p>
+    <p class="lede">Plot PRx against CPP over hours and it forms a U. The bottom is <span class="t" tabindex="0" data-tip="CPP at which PRx is lowest">CPPopt</span>.</p>
+    <dl class="keys">
+      <dt>30 × 10 s</dt><dd>Averages per PRx value (~5 min)</dd>
+      <dt>&lt;0</dt><dd>Intact reactivity</dd>
+      <dt>&gt;0.25</dt><dd>Impaired (0.2–0.3 cited)</dd>
+      <dt>4 h</dt><dd>Typical CPPopt window</dd>
+    </dl>
+    <p class="pearl"><b>Same idea, other signals</b><span class="t" tabindex="0" data-tip="MAP vs TCD flow velocity">Mx</span> · <span class="t" tabindex="0" data-tip="MAP vs PbtO₂">ORx</span> · <span class="t" tabindex="0" data-tip="MAP vs NIRS oximetry — noninvasive">COx</span></p>
+    <div class="pager"><button data-prev>◀ Prev</button><button data-next>Next ▶</button></div>
+  </div>
+
+  <div class="stage">
+    <div class="panel">
+      <div class="ptitle"><span>10-s means · last 15 min</span><span>window = PRx</span></div>
+      <div class="row" style="grid-template-columns:minmax(0,1fr) auto;align-items:center">
+        <canvas id="trace" class="cv-trace"></canvas>
+        <div class="ro" style="align-items:flex-end;min-width:110px"><span class="k">PRx</span><span class="big" id="prxBig">—</span><span id="prxPill"></span></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ptitle"><span>PRx vs CPP · last 4 h</span><span class="chips" data-presets></span></div>
+      <canvas id="ucurve" class="cv-u"></canvas>
+    </div>
+    <div class="panel">
+      <div class="controls">
+        <div class="ctl"><label for="map3">Pressor → MAP</label><input type="range" id="map3" data-bind="map" min="50" max="140" step="1"><output data-out="mapU"></output></div>
+        <button class="btn" id="ff">Simulate 4 h</button>
+        <button class="btn" id="clr">Clear</button>
+      </div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">CPP</span><span class="v" style="color:var(--cpp)" data-out="cpp"></span></div>
+      <div class="ro"><span class="k">CPPopt</span><span class="v" style="color:var(--prx)" id="optOut">—</span></div>
+      <div class="ro"><span class="k">Δ to opt</span><span class="v" id="deltaOut">—</span></div>
+      <span id="optPill"></span>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ 4 · OXYGEN ═════════ -->
+<section class="chapter" id="ch4" data-ch="4" hidden>
+  <div class="copy">
+    <div class="eyebrow">4 · Oxygen &amp; metabolism</div>
+    <h2>Is the tissue getting oxygen?</h2>
+    <p class="lede"><span class="t" tabindex="0" data-tip="Brain tissue oxygen tension, from a probe in white matter">PbtO₂</span> measures oxygen tension around a probe tip. Microdialysis samples the tissue's fuel and waste. Both can go critical while ICP and CPP sit on target.</p>
+    <dl class="keys">
+      <dt>&lt;20</dt><dd>PbtO₂ treat, mmHg</dd>
+      <dt>&lt;10</dt><dd>Severe tissue hypoxia</dd>
+      <dt>&gt;40</dt><dd><span class="t" tabindex="0" data-tip="Lactate / pyruvate ratio">L/P</span> metabolic crisis (&gt;25 abnormal)</dd>
+      <dt>&lt;0.8</dt><dd>Brain glucose, mmol/L</dd>
+      <dt>55–75</dt><dd><span class="t" tabindex="0" data-tip="Jugular venous O₂ saturation — global extraction">SjvO₂</span> normal, %</dd>
+    </dl>
+    <p class="pearl"><b>Pearl</b>High L/P with low pyruvate: ischemia. High L/P with normal pyruvate: mitochondrial failure.</p>
+    <div class="pager"><button data-prev>◀ Prev</button><button data-next>Next ▶</button></div>
+  </div>
+
+  <div class="stage">
+    <div class="panel">
+      <div class="ptitle"><span>Scenario</span></div>
+      <div class="chips" id="scen4"></div>
+    </div>
+    <div class="row r-1-3">
+      <div class="panel">
+        <div class="ptitle"><span>Pressure</span></div>
+        <div class="meters">
+          <div class="meter" data-meter="icp"><div class="mh"><span class="k">ICP</span><span class="v"></span><span class="u">mmHg</span></div><div class="track"></div></div>
+          <div class="meter" data-meter="cpp"><div class="mh"><span class="k">CPP</span><span class="v"></span><span class="u">mmHg</span></div><div class="track"></div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="ptitle"><span>Delivery &amp; metabolism</span><span id="crisis4"></span></div>
+        <div class="meters two">
+          <div class="meter" data-meter="pbto2"><div class="mh"><span class="k">PbtO₂</span><span class="v"></span><span class="u">mmHg</span></div><div class="track"></div></div>
+          <div class="meter" data-meter="sjv"><div class="mh"><span class="k">SjvO₂</span><span class="v"></span><span class="u">%</span></div><div class="track"></div></div>
+          <div class="meter" data-meter="lp"><div class="mh"><span class="k">L/P</span><span class="v"></span><span class="u">ratio</span></div><div class="track"></div></div>
+          <div class="meter" data-meter="glu"><div class="mh"><span class="k">Glucose</span><span class="v"></span><span class="u">mmol/L</span></div><div class="track"></div></div>
+          <div class="meter" data-meter="lac"><div class="mh"><span class="k">Lactate</span><span class="v"></span><span class="u">mmol/L</span></div><div class="track"></div></div>
+          <div class="meter" data-meter="pyr"><div class="mh"><span class="k">Pyruvate</span><span class="v"></span><span class="u">µmol/L</span></div><div class="track"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ptitle"><span>Tissue PO₂ around a capillary</span><span class="aside" id="kroghNote"></span></div>
+      <canvas id="krogh" class="cv-krogh"></canvas>
+    </div>
+    <div class="panel">
+      <div class="controls">
+        <div class="ctl"><label for="hb4">Hb</label><input type="range" id="hb4" data-bind="hb" min="5" max="16" step="0.5"><output data-out="hbU"></output></div>
+        <div class="ctl"><label for="pao24">PaO₂</label><input type="range" id="pao24" data-bind="pao2" min="40" max="400" step="5"><output data-out="pao2U"></output></div>
+        <div class="ctl"><label for="glu4">Serum glucose</label><input type="range" id="glu4" data-bind="glu" min="40" max="250" step="5"><output data-out="gluU"></output></div>
+        <div class="ctl"><label for="map4">MAP</label><input type="range" id="map4" data-bind="map" min="50" max="140" step="1"><output data-out="mapU"></output></div>
+        <div class="ctl"><label for="co24">PaCO₂</label><input type="range" id="co24" data-bind="paco2" min="20" max="65" step="1"><output data-out="paco2U"></output></div>
+      </div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">CBF</span><span class="v" style="color:var(--cbf)" data-out="cbf"></span></div>
+      <div class="ro"><span class="k"><span class="t" tabindex="0" data-tip="Arterial O₂ content = 1.34 × Hb × SaO₂ + 0.003 × PaO₂">CaO₂</span></span><span class="v" id="cao2"></span></div>
+      <div class="ro"><span class="k">SaO₂</span><span class="v" id="sao2"></span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ 5 · VASOSPASM ═════════ -->
+<section class="chapter" id="ch5" data-ch="5" hidden>
+  <div class="copy">
+    <div class="eyebrow">5 · Vasospasm &amp; DCI</div>
+    <h2>The EEG sees it first</h2>
+    <p class="lede">After aneurysmal SAH, cerebral arteries narrow between days 3 and 14, peaking around day 7. Ischemia strips alpha from the EEG hours before the exam changes.</p>
+    <dl class="keys">
+      <dt>Day 3–14</dt><dd>Risk window, peak 7–10</dd>
+      <dt>MCA &gt;120</dt><dd>Vasospasm, cm/s (&gt;200 severe)</dd>
+      <dt>LR &gt;3</dt><dd>Spasm (&gt;6 severe)</dd>
+      <dt>LR &lt;3</dt><dd>Hyperemia</dd>
+      <dt>ADR ↓ &gt;10%</dt><dd>qEEG alarm</dd>
+    </dl>
+    <p class="pearl"><b>Pearl</b>Fast MCA with <span class="t" tabindex="0" data-tip="Lindegaard ratio = MCA / extracranial ICA velocity">LR</span> &lt;3 is hyperemia: the ICA is fast too.</p>
+    <div class="pager"><button data-prev>◀ Prev</button><button data-next>Next ▶</button></div>
+  </div>
+
+  <div class="stage">
+    <div class="panel">
+      <div class="ptitle"><span>SAH course · <span class="t" tabindex="0" data-tip="Compressed spectral array — EEG power by frequency over time">CSA</span> · <span class="t" tabindex="0" data-tip="Alpha (8–13 Hz) / delta (1–4 Hz) power, % change from baseline">ADR</span> · <span class="t" tabindex="0" data-tip="Transcranial Doppler velocities">TCD</span> · GCS</span><span class="chips" id="course5"></span></div>
+      <canvas id="timeline" class="cv-timeline"></canvas>
+      <div class="legend"><span><i style="background:var(--mca)"></i>MCA</span><span><i style="background:var(--muted)"></i>ICA</span><span><i style="background:var(--prx)"></i>ADR (6-h mean)</span><span><i style="background:var(--cpp)"></i>Now</span></div>
+    </div>
+    <div class="panel">
+      <div class="ptitle"><span>EEG · 10 s</span><span id="eegPill"></span></div>
+      <canvas id="eeg" class="cv-eeg"></canvas>
+    </div>
+    <div class="panel">
+      <div class="controls">
+        <div class="ctl"><label for="day5">SAH day</label><input type="range" id="day5" min="0" max="14" step="0.0417"><output id="dayOut"></output></div>
+        <button class="btn" id="play5">Play</button>
+      </div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">MCA</span><span class="v" style="color:var(--mca)" id="mcaOut"></span></div>
+      <div class="ro"><span class="k">ICA</span><span class="v" id="icaOut"></span></div>
+      <div class="ro"><span class="k">LR</span><span class="v" id="lrOut"></span></div>
+      <div class="ro"><span class="k">ADR Δ</span><span class="v" style="color:var(--prx)" id="adrOut"></span></div>
+      <div class="ro"><span class="k">GCS</span><span class="v" id="gcsOut"></span></div>
+      <span id="tcdPill"></span>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ 6 · VIRTUAL PATIENT ═════════ -->
+<section class="chapter" id="ch6" data-ch="6" hidden>
+  <div class="copy">
+    <div class="eyebrow">6 · Virtual patient</div>
+    <h2>Run the monitor</h2>
+    <p class="lede">Every signal from chapters 1–5 on one time-aligned screen. Pick a case, treat what you see. Six hours pass in about 90 seconds.</p>
+    <dl class="keys">
+      <dt>ICP &lt;22</dt><dd>mmHg</dd>
+      <dt>CPPopt ±5</dt><dd>Individual CPP target</dd>
+      <dt>PRx &lt;0.25</dt><dd>Reactivity preserved</dd>
+      <dt>PbtO₂ &gt;20</dt><dd>mmHg</dd>
+      <dt>ADR ↓ &lt;10%</dt><dd>No new ischemia</dd>
+    </dl>
+    <div class="side-u">
+      <div class="ptitle"><span>PRx vs CPP · last 4 h</span><span>▲ now</span></div>
+      <canvas id="u6" class="cv-u6"></canvas>
+    </div>
+    <p class="pearl"><b>Pearl</b>Hyperventilation lowers ICP and PbtO₂ together. Watch both.</p>
+    <div class="pager"><button data-prev>◀ Prev</button><button disabled>Next ▶</button></div>
+  </div>
+
+  <div class="stage">
+    <div class="panel sticky-ctl">
+      <div class="controls">
+        <div class="chips" id="case6"></div>
+        <span style="flex:1"></span>
+        <span class="clock" id="clock6">0:00 / 6:00</span>
+        <div class="chips" id="speed6"><button class="chip" data-speed="1">1×</button><button class="chip" data-speed="3">3×</button></div>
+        <button class="btn" id="run6">Pause</button>
+        <button class="btn" id="restart6">Restart</button>
+      </div>
+    </div>
+    <div class="panel casecard">
+      <canvas id="ct6" class="cv-ct" aria-label="Schematic CT"></canvas>
+      <div class="cc-text">
+        <div class="cc-title" id="ccTitle"></div>
+        <p id="ccHx"></p>
+        <p><b>CT</b> <span id="ccCT"></span></p>
+        <p><b>On</b> <span id="ccOn"></span></p>
+        <p class="cc-exam"><b>Exam</b> <span id="ccExam"></span></p>
+      </div>
+      <dl class="labs" id="labs6"></dl>
+    </div>
+    <div class="panel">
+      <div class="monitor">
+        <canvas id="mon6" class="cv-monitor"></canvas>
+        <div class="nums" id="nums6"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ptitle"><span>Treat</span></div>
+      <div class="controls">
+        <div class="ctl"><label for="map6">Pressor → MAP</label><input type="range" id="map6" data-bind="map" min="60" max="130" step="1"><output data-out="mapU"></output></div>
+      </div>
+      <div class="txs" id="tx6"></div>
+    </div>
+    <div class="panel debrief" id="debrief6" hidden>
+      <div class="ptitle"><span>Debrief</span><span id="dbCase"></span></div>
+      <div class="dbgrid" id="dbGrid"></div>
+      <p class="dbtake" id="dbTake"></p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+/* ───────── utils ───────── */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)), lerp=(a,b,t)=>a+(b-a)*t, sig=x=>1/(1+Math.exp(-x));
+const randn=()=>{let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);};
+const fmt=(v,d=0)=>(v<0&&d?'−'+Math.abs(v).toFixed(d):v.toFixed(d));
+let COL={};
+function readColors(){const cs=getComputedStyle(document.documentElement);
+  ['bg','panel','panel2','line','grid','text','muted','map','icp','cpp','prx','cbf','csf','brain','bone','lesion','good','warn','bad','mca'].forEach(k=>COL[k]=cs.getPropertyValue('--'+k).trim());}
+const MONO='500 11px "IBM Plex Mono", ui-monospace, monospace';
+const COND='600 11px "IBM Plex Sans Condensed", system-ui, sans-serif';
+
+function fit(cv){const r=cv.getBoundingClientRect(),d=window.devicePixelRatio||1;
+  const W=Math.max(1,Math.round(r.width*d)),H=Math.max(1,Math.round(r.height*d));
+  if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H;}
+  const ctx=cv.getContext('2d');ctx.setTransform(d,0,0,d,0,0);ctx.clearRect(0,0,r.width,r.height);
+  return {ctx,w:r.width,h:r.height};}
+
+function axes(ctx,w,h,o){
+  const m=Object.assign({l:42,r:12,t:12,b:34},o.m||{});
+  const x0=m.l,x1=w-m.r,y0=h-m.b,y1=m.t;
+  const sx=v=>x0+(v-o.x[0])/(o.x[1]-o.x[0])*(x1-x0);
+  const sy=v=>y0-(v-o.y[0])/(o.y[1]-o.y[0])*(y0-y1);
+  ctx.lineWidth=1;ctx.font=MONO;ctx.fillStyle=COL.muted;
+  (o.xt||[]).forEach(v=>{const X=Math.round(sx(v))+.5;ctx.strokeStyle=COL.grid;ctx.beginPath();ctx.moveTo(X,y1);ctx.lineTo(X,y0);ctx.stroke();
+    ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(o.xf?o.xf(v):v,X,y0+6);});
+  (o.yt||[]).forEach(v=>{const Y=Math.round(sy(v))+.5;ctx.strokeStyle=COL.grid;ctx.beginPath();ctx.moveTo(x0,Y);ctx.lineTo(x1,Y);ctx.stroke();
+    ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(o.yf?o.yf(v):v,x0-6,Y);});
+  ctx.strokeStyle=COL.line;ctx.beginPath();ctx.moveTo(x0+.5,y1);ctx.lineTo(x0+.5,y0+.5);ctx.lineTo(x1,y0+.5);ctx.stroke();
+  ctx.font=COND;ctx.fillStyle=COL.muted;
+  if(o.xl){ctx.textAlign='right';ctx.textBaseline='bottom';ctx.fillText(o.xl.toUpperCase(),x1,h-1);}
+  if(o.yl){ctx.save();ctx.translate(11,y1);ctx.rotate(-Math.PI/2);ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(o.yl.toUpperCase(),0,0);ctx.restore();}
+  return {sx,sy,x0,x1,y0,y1};}
+
+function dashed(ctx,x0,y0,x1,y1,c){ctx.save();ctx.setLineDash([4,4]);ctx.strokeStyle=c;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);ctx.stroke();ctx.restore();}
+function dot(ctx,x,y,c,r=5){ctx.fillStyle=c;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();ctx.strokeStyle=COL.panel;ctx.lineWidth=2;ctx.stroke();}
+function tag(ctx,txt,x,y,c,align='left',base='bottom'){ctx.font=MONO;ctx.fillStyle=c;ctx.textAlign=align;ctx.textBaseline=base;ctx.fillText(txt,x,y);}
+function boxTag(ctx,txt,x,y,align,c=COL.text){ctx.font=MONO;const tw=ctx.measureText(txt).width,bx=align==='right'?x-tw-8:x;
+  ctx.fillStyle=COL.panel;ctx.globalAlpha=.85;ctx.fillRect(bx,y-8,tw+8,16);ctx.globalAlpha=1;tag(ctx,txt,bx+4,y,c,'left','middle');}
+function pill(txt,c){return `<span class="pill" style="color:${c}">${txt}</span>`;}
+
+/* ───────── patient model ───────── */
+const PRESETS={
+  normal:{name:'Normal',     lla:50, ula:150,opt:90, base:-0.30,q:0.00005,lesion:0},
+  htn:   {name:'Chronic HTN',lla:80, ula:170,opt:110,base:-0.25,q:0.0003,lesion:0},
+  tbi:   {name:'TBI',        lla:60, ula:90, opt:73, base:-0.15,q:0.0011,lesion:40},
+  lost:  {name:'Impaired',   lla:null,ula:null,opt:null,base:0.45,q:0,lesion:50},
+};
+const S={lesion:40,drained:0,paco2:40,map:80,preset:'tbi',prx:null};
+
+const icpOfV=v=>7+2.2*(Math.exp(0.045*v)-1);
+const slopeOfV=v=>0.099*Math.exp(0.045*v);
+function derive(){
+  const co2v=0.5*(S.paco2-40);
+  const cm=active===6?C:C0;
+  const veff=Math.max(0,S.lesion+co2v-S.drained-cm.osmo-(cm.sed?3:0)-(cm.hob?2:0));
+  const icp=icpOfV(veff), slope=slopeOfV(veff), amp=1+4*slope, cpp=S.map-icp;
+  const rap=0.9*(1-Math.exp(-slope/0.35))-1.2*clamp((45-cpp)/20,0,1);
+  const c=clamp((slope-0.1)/1.2,0,1);
+  return {co2v,veff,icp,slope,amp,cpp,rap,c,p2:0.6+0.9*c,cbf:cbfEff(cpp,cm.spasm)};
+}
+function co2f(){return clamp(1+0.03*(S.paco2-40),0.45,1.8);}
+const smin=(a,b,k=4)=>-k*Math.log(Math.exp(-a/k)+Math.exp(-b/k));
+const smax=(a,b,k=4)=>-smin(-a,-b,k);
+function cbf(cpp,key=S.preset,f=co2f()){
+  const p=PRESETS[key],P=50*f; cpp=Math.max(0,cpp);
+  if(!p.lla) return P*cpp/80;
+  return Math.max(0,smin(P*cpp/p.lla, smax(P, P*(1+(cpp-p.ula)/100))));
+}
+function vesselDiam(cpp){
+  const p=PRESETS[S.preset];
+  if(!p.lla) return {d:clamp(0.35+0.55*cpp/100,0.25,1),s:'Pressure-passive',c:COL.bad};
+  if(cpp<p.lla) return {d:0.55+0.45*clamp(cpp/p.lla,0,1),s:'Maximally dilated',c:COL.warn};
+  if(cpp<=p.ula) return {d:lerp(1,0.5,(cpp-p.lla)/(p.ula-p.lla)),s:'Autoregulating',c:COL.good};
+  return {d:clamp(0.5+(cpp-p.ula)/80,0.5,1.05),s:'Forced dilation',c:COL.bad};
+}
+function prxTrue(cpp,key=S.preset){
+  const p=PRESETS[key];
+  if(!p.lla) return clamp(p.base+0.1*Math.sin(cpp/9),-0.7,0.9);
+  return clamp(p.base+p.q*(cpp-p.opt)**2+0.5*sig((p.lla-cpp)/4)+0.5*sig((cpp-p.ula)/4),-0.7,0.9);
+}
+
+/* ───────── outputs / binding ───────── */
+function outputs(){
+  const d=derive(), set=(k,v)=>$$(`[data-out="${k}"]`).forEach(e=>e.textContent=v);
+  set('map',S.map.toFixed(0)); set('mapU',S.map+' mmHg');
+  set('icp',d.icp.toFixed(0)); set('cpp',d.cpp.toFixed(0));
+  set('paco2',S.paco2); set('paco2U',S.paco2+' mmHg');
+  set('lesion',S.lesion+' mL'); set('drained',S.drained+' mL');
+  set('amp',d.amp.toFixed(1)); set('rap',fmt(d.rap,2)); set('cbf',d.cbf.toFixed(0));
+  set('prx',S.prx==null?'—':fmt(S.prx,2));
+  const z=d.rap<0?['Terminal',COL.bad]:d.slope<0.35?['Compensated',COL.good]:d.slope<1.2?['Reserve exhausting',COL.warn]:['Decompensated',COL.bad];
+  $('#zone1').innerHTML=pill(z[0],z[1]);
+  $('#p2p1').innerHTML=d.p2>1?pill('P2 > P1',COL.warn):pill('P1 > P2',COL.good);
+  const v=vesselDiam(d.cpp); $('#vstate').innerHTML=pill(v.s,v.c);
+  $$('.chip[data-preset]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.preset===S.preset));
+}
+function sync(){
+  $$('input[data-bind]').forEach(el=>{if(+el.value!==S[el.dataset.bind])el.value=S[el.dataset.bind];});
+  outputs(); drawStatic();
+}
+$$('input[data-bind]').forEach(el=>el.addEventListener('input',()=>{S[el.dataset.bind]=+el.value;sync();}));
+$('#drain').onclick=()=>{S.drained=Math.min(25,S.drained+5);sync();};
+$('#resetEvd').onclick=()=>{S.drained=0;sync();};
+$$('[data-presets]').forEach(box=>{box.innerHTML=Object.entries(PRESETS).map(([k,p])=>`<button class="chip" data-preset="${k}">${p.name}</button>`).join('');});
+$$('.chip[data-preset]').forEach(b=>b.onclick=()=>{if(S.preset===b.dataset.preset)return;S.preset=b.dataset.preset;S.lesion=PRESETS[S.preset].lesion;S.drained=0;simReset();simRun(1440);sync();});
+
+/* ───────── nav ───────── */
+let active=1;
+function go(n){
+  n=clamp(n,1,6); const prev=active;
+  if(prev===6&&n!==6)leave6();
+  active=n;
+  if(n===6&&prev!==6)enter6();
+  $$('.chapter').forEach(s=>s.hidden=+s.dataset.ch!==n);
+  $('.strip').hidden=n===6;
+  $$('nav button').forEach(b=>b.setAttribute('aria-current',+b.dataset.go===n));
+  try{history.replaceState(null,'','#ch'+n);}catch(e){}
+  window.scrollTo({top:0});
+  sync();
+}
+$$('nav button').forEach(b=>b.onclick=()=>go(+b.dataset.go));
+$$('[data-next]').forEach(b=>b.onclick=()=>go(active+1));
+$$('[data-prev]').forEach(b=>b.onclick=()=>go(active-1));
+$('#themeBtn').onclick=()=>{const r=document.documentElement;r.dataset.theme=r.dataset.theme==='light'?'dark':'light';
+  try{localStorage.setItem('nml-theme',r.dataset.theme);}catch(e){} readColors();sync();};
+try{const t=localStorage.getItem('nml-theme');if(t)document.documentElement.dataset.theme=t;}catch(e){}
+
+/* ───────── ch1: skull ───────── */
+function drawSkull(){
+  const {ctx,w,h}=fit($('#skull')), d=derive();
+  const cx=w/2,cy=h/2,R=Math.min(w,h)*0.44, rx=R*0.84, ry=R;
+  const comp=clamp((S.lesion+d.co2v)/45,0,1);
+  const shift=clamp((S.lesion+d.co2v-S.drained-40)/35,0,1)*R*0.16;
+  // CSF space
+  ctx.fillStyle=COL.csf;ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,0,0,7);ctx.fill();
+  // brain
+  const rim=lerp(R*0.075,R*0.012,comp);
+  ctx.save();ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,0,0,7);ctx.clip();
+  ctx.fillStyle=COL.brain;ctx.beginPath();ctx.ellipse(cx-shift*0.35,cy,rx-rim,ry-rim,0,0,7);ctx.fill();
+  // gyri hint
+  ctx.strokeStyle='rgba(0,0,0,.14)';ctx.lineWidth=1.2;
+  for(let i=0;i<14;i++){const a=i/14*Math.PI*2, r1=0.78, x=cx-shift*0.35+Math.cos(a)*(rx-rim)*r1, y=cy+Math.sin(a)*(ry-rim)*r1;
+    ctx.beginPath();ctx.arc(x,y,R*0.09,a+2.2,a+4.1);ctx.stroke();}
+  // falx / midline
+  ctx.strokeStyle=COL.bone;ctx.globalAlpha=.55;ctx.lineWidth=2;ctx.beginPath();
+  ctx.moveTo(cx,cy-ry);ctx.quadraticCurveTo(cx-shift*2,cy+ry*0.15,cx,cy+ry);ctx.stroke();ctx.globalAlpha=1;
+  // ventricles
+  const vs=clamp(1-comp*0.75-S.drained/35,0.12,1);
+  ctx.fillStyle=COL.csf;
+  [-1,1].forEach(sd=>{const sq=sd>0?clamp(1-shift/(R*0.1),0.25,1):1;
+    ctx.beginPath();ctx.ellipse(cx-shift+sd*R*0.11,cy-R*0.05,R*0.06*vs*sq,R*0.24*Math.sqrt(vs),sd*0.28,0,7);ctx.fill();});
+  // mass (extra-axial lens, right)
+  if(S.lesion>0){const t=Math.sqrt(S.lesion)*R*0.05;
+    ctx.fillStyle=COL.lesion;ctx.beginPath();ctx.ellipse(cx+rx,cy-R*0.08,t,R*(0.25+S.lesion/150),0,0,7);ctx.fill();}
+  ctx.restore();
+  // bone
+  ctx.strokeStyle=COL.bone;ctx.lineWidth=R*0.07;ctx.beginPath();ctx.ellipse(cx,cy,rx+R*0.035,ry+R*0.035,0,0,7);ctx.stroke();
+  { const vry=R*0.24*Math.sqrt(vs), th=-0.28, tx=cx-shift-R*0.11+0.5*vry*Math.sin(th), ty=cy-R*0.05-0.5*vry*Math.cos(th), bx=cx-R*0.3, by=cy-Math.sqrt(1-(0.3/0.84)**2)*ry;
+    ctx.strokeStyle=COL.text;ctx.lineCap='round';
+    ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(bx-R*0.12,by-R*0.14);ctx.lineTo(bx,by);ctx.lineTo(tx,ty);ctx.stroke();
+    ctx.fillStyle=COL.panel;ctx.beginPath();ctx.arc(bx,by,R*0.035,0,7);ctx.fill();ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle=COL.text;ctx.beginPath();ctx.arc(tx,ty,2.5,0,7);ctx.fill();
+    tag(ctx,'EVD',bx-R*0.1,by+R*0.02,COL.text,'right','middle'); }
+  if(shift>2){tag(ctx,'shift '+(shift/R*60).toFixed(0)+' mm',cx,cy+ry+R*0.02,COL.muted,'center','top');}
+}
+
+/* ───────── ch1: PV curve ───────── */
+function drawPV(){
+  const {ctx,w,h}=fit($('#pv')), d=derive();
+  const A=axes(ctx,w,h,{x:[0,80],y:[0,80],xt:[0,20,40,60,80],yt:[0,20,40,60,80],xl:'Added volume, mL',yl:'ICP, mmHg'});
+  // zones
+  const z1=Math.log(0.35/0.099)/0.045, z2=Math.log(1.2/0.099)/0.045;
+  [[0,z1,COL.good],[z1,z2,COL.warn],[z2,80,COL.bad]].forEach(([a,b,c])=>{ctx.fillStyle=c;ctx.globalAlpha=.07;ctx.fillRect(A.sx(a),A.y1,A.sx(b)-A.sx(a),A.y0-A.y1);});
+  ctx.globalAlpha=1;
+  dashed(ctx,A.x0,A.sy(22),A.x1,A.sy(22),COL.bad); tag(ctx,'22',A.x1-2,A.sy(22)-3,COL.bad,'right');
+  // curve
+  ctx.strokeStyle=COL.icp;ctx.lineWidth=2.5;ctx.beginPath();
+  for(let v=0;v<=80;v+=0.5){const y=icpOfV(v);if(y>80)break;v?ctx.lineTo(A.sx(v),A.sy(y)):ctx.moveTo(A.sx(v),A.sy(y));}
+  ctx.stroke();
+  // pulse triangle: same ΔV → ΔICP
+  const v=d.veff, dv=4, i0=icpOfV(v), i1=Math.min(80,icpOfV(v+dv));
+  ctx.strokeStyle=COL.text;ctx.lineWidth=1.2;ctx.beginPath();
+  ctx.moveTo(A.sx(v),A.sy(i0));ctx.lineTo(A.sx(v+dv),A.sy(i0));ctx.lineTo(A.sx(v+dv),A.sy(i1));ctx.stroke();
+  tag(ctx,'ΔP '+(i1-i0).toFixed(1),A.sx(v+dv)+5,(A.sy(i0)+A.sy(i1))/2,COL.text,'left','middle');
+  dot(ctx,A.sx(v),A.sy(Math.min(80,i0)),COL.icp,6);
+}
+
+/* ───────── ch1: ICP waveform ───────── */
+const g=(x,m,s)=>Math.exp(-((x-m)**2)/(2*s*s));
+// sweep display: 10-s window drawn left→right, overwriting the previous sweep behind an erase gap
+const WAVE={buf:[],N:0,last:-1,numT:-1e9};
+function drawWave(t){
+  const {ctx,w,h}=fit($('#wave')), d=derive();
+  const T=0.75, span=10, peak=Math.max(1,d.p2), k=d.amp/peak;
+  const lo=d.icp-4, hi=d.icp+18;
+  const A=axes(ctx,w,h,{x:[0,span],y:[lo,hi],yt:[Math.ceil(lo/5)*5,Math.ceil(lo/5)*5+10],m:{b:10,l:36}});
+  const val=tt=>{const ph=((tt%T)+T)%T/T;return d.icp-d.amp*0.35+k*(1*g(ph,.14,.035)+d.p2*g(ph,.31,.05)+0.45*g(ph,.52,.05))+0.6*Math.sin(tt*2*Math.PI/4);};
+  const N=Math.max(2,Math.floor(A.x1-A.x0));
+  if(WAVE.N!==N){WAVE.N=N;WAVE.buf=new Array(N+1).fill(NaN);WAVE.last=-1;}
+  const cur=Math.floor((t%span)/span*N);
+  if(WAVE.last<0){for(let c=0;c<N;c++)WAVE.buf[c]=val(t-((cur-c+N)%N)/N*span);WAVE.last=cur;}
+  // fill columns written since last frame
+  let n=WAVE.last<0?1:(cur-WAVE.last+N)%N; if(n>N/2)n=1;
+  for(let j=n-1;j>=0;j--){
+    const col=(cur-j+N)%N, tt=t-j/N*span;
+    WAVE.buf[col]=val(tt);
+  }
+  WAVE.last=cur;
+  // monitor-style numeric: mean of the last 5 s of trace, refreshed once a second
+  if(t-WAVE.numT>=1){WAVE.numT=t;let sum=0,n5=Math.round(N*5/span);
+    for(let j=0;j<n5;j++)sum+=WAVE.buf[(cur-j+N)%N];$('#icpNum').textContent=Math.round(sum/n5);}
+  const gap=Math.round(N*0.3/span), inGap=c=>((c-cur+N)%N)>0&&((c-cur+N)%N)<=gap;
+  ctx.strokeStyle=COL.icp;ctx.lineWidth=2;ctx.beginPath();let pen=false;
+  for(let c=0;c<N;c++){const v=WAVE.buf[c];
+    if(isNaN(v)||inGap(c)){pen=false;continue;}
+    const x=A.x0+c,y=A.sy(clamp(v,lo,hi));pen?ctx.lineTo(x,y):ctx.moveTo(x,y);pen=true;
+    if(c===cur){ctx.stroke();ctx.beginPath();pen=false;}}
+  ctx.stroke();
+  // sweep cursor
+  ctx.fillStyle=COL.icp;ctx.beginPath();ctx.arc(A.x0+cur,A.sy(clamp(WAVE.buf[cur],lo,hi)),3,0,7);ctx.fill();
+}
+
+/* ───────── ch2: Lassen ───────── */
+function drawLassen(){
+  const {ctx,w,h}=fit($('#lassen')), d=derive(), p=PRESETS[S.preset];
+  const A=axes(ctx,w,h,{x:[0,200],y:[0,120],xt:[0,50,100,150,200],yt:[0,20,50,100],xl:'CPP, mmHg',yl:'CBF'});
+  if(p.lla){ctx.fillStyle=COL.grid;ctx.fillRect(A.sx(p.lla),A.y1,A.sx(p.ula)-A.sx(p.lla),A.y0-A.y1);
+    tag(ctx,'LLA '+p.lla,A.sx(p.lla)+4,A.y1+12,COL.muted);tag(ctx,'ULA '+p.ula,A.sx(p.ula)-4,A.y1+12,COL.muted,'right');}
+  dashed(ctx,A.x0,A.sy(20),A.x1,A.sy(20),COL.bad); tag(ctx,'ischemia',A.x1-2,A.sy(20)-3,COL.bad,'right');
+  const curve=(key,f,c,lw)=>{ctx.strokeStyle=c;ctx.lineWidth=lw;ctx.beginPath();
+    for(let x=0;x<=200;x+=1){const y=Math.min(120,cbf(x,key,f));x?ctx.lineTo(A.sx(x),A.sy(y)):ctx.moveTo(A.sx(x),A.sy(y));}ctx.stroke();};
+  if(S.preset!=='normal'||S.paco2!==40){ctx.globalAlpha=.55;curve('normal',1,COL.muted,1.5);ctx.globalAlpha=1;}
+  curve(S.preset,co2f(),COL.cbf,2.5);
+  const x=clamp(d.cpp,0,200),y=Math.min(120,d.cbf);
+  dashed(ctx,A.sx(x),A.y0,A.sx(x),A.sy(y),COL.cpp);
+  dot(ctx,A.sx(x),A.sy(y),COL.cpp,6);
+  tag(ctx,'CPP '+d.cpp.toFixed(0),A.sx(x)+8,A.sy(y)-8,COL.cpp);
+}
+
+/* ───────── ch2: vessel ───────── */
+const RBC=Array.from({length:46},()=>({x:Math.random(),y:Math.random()*2-1}));
+let lastT=0;
+function drawVessel(t,dt){
+  const {ctx,w,h}=fit($('#vessel')), d=derive(), v=vesselDiam(d.cpp);
+  const cy=h/2, lum=h*0.36*v.d, wall=6+(1.1-v.d)*h*0.16;
+  // wall
+  ctx.fillStyle=COL.map;ctx.globalAlpha=.25;
+  ctx.fillRect(0,cy-lum-wall,w,wall);ctx.fillRect(0,cy+lum,w,wall);ctx.globalAlpha=1;
+  ctx.strokeStyle=COL.map;ctx.globalAlpha=.5;ctx.lineWidth=1;
+  for(let x=6;x<w;x+=9){ctx.beginPath();ctx.moveTo(x,cy-lum-wall+2);ctx.lineTo(x+4,cy-lum-2);ctx.moveTo(x,cy+lum+2);ctx.lineTo(x+4,cy+lum+wall-2);ctx.stroke();}
+  ctx.globalAlpha=1;
+  ctx.fillStyle=COL.panel2;ctx.fillRect(0,cy-lum,w,lum*2);
+  // cells
+  const spd=d.cbf/50*0.18;
+  ctx.fillStyle=COL.map;
+  RBC.forEach(c=>{c.x=(c.x+spd*dt*(1-0.5*c.y*c.y))%1;
+    ctx.beginPath();ctx.ellipse(c.x*w,cy+c.y*lum*0.8,5,3.2,0,0,7);ctx.fill();});
+  tag(ctx,'CBF '+d.cbf.toFixed(0)+' →',w-8,h-4,COL.cbf,'right');
+}
+
+/* ───────── ch3: PRx simulation ───────── */
+const SIM={t:0,drift:0,me:0,ne:0,ph:[0,0,0],nph:[0,0,0],MAP:[],ICP:[],rec:[]};
+const MW=[[3,90],[2,150],[1.5,240]], MSD=Math.sqrt(MW.reduce((s,[a])=>s+a*a/2,0));
+const slowWave=(t,ph)=>MW.reduce((s,[a,p],i)=>s+a*Math.sin(2*Math.PI*t/p+ph[i]),0)/MSD;
+function simReset(){SIM.MAP=[];SIM.ICP=[];SIM.rec=[];SIM.drift=0;SIM.ph=SIM.ph.map(()=>Math.random()*7);SIM.nph=SIM.nph.map(()=>Math.random()*7);S.prx=null;}
+function pearson(a,b){const n=a.length;let ma=0,mb=0;for(let i=0;i<n;i++){ma+=a[i];mb+=b[i];}ma/=n;mb/=n;
+  let sab=0,saa=0,sbb=0;for(let i=0;i<n;i++){const x=a[i]-ma,y=b[i]-mb;sab+=x*y;saa+=x*x;sbb+=y*y;}return sab/Math.sqrt(saa*sbb||1);}
+function simStep(sd,sweep=0){
+  SIM.t+=10;
+  const tau=240;SIM.drift+=-SIM.drift/tau+sd*Math.sqrt(2/tau)*randn();
+  SIM.me=0.85*SIM.me+0.527*randn();SIM.ne=0.9*SIM.ne+0.436*randn();
+  const m=0.7*slowWave(SIM.t,SIM.ph)+0.7*SIM.me, n=SIM.ne;
+  const d=derive(), mean=S.map+SIM.drift+sweep, MAP=mean+3.5*m+0.3*randn();
+  const r=prxTrue(mean-d.icp), z=(MAP-mean)/3.5, gain=0.5*d.amp;
+  const ICP=d.icp+gain*(r*z+Math.sqrt(1-r*r)*n)+0.08*randn();
+  SIM.MAP.push(MAP);SIM.ICP.push(ICP);
+  if(SIM.MAP.length>120){SIM.MAP.shift();SIM.ICP.shift();}
+  if(SIM.MAP.length>=30){
+    const a=SIM.MAP.slice(-30),b=SIM.ICP.slice(-30);
+    const prx=pearson(a,b); let cpp=0;for(let i=0;i<30;i++)cpp+=a[i]-b[i];cpp/=30;
+    SIM.rec.push({cpp,prx});if(SIM.rec.length>1440)SIM.rec.shift();S.prx=prx;
+  }
+}
+// 4 h of history: CPP wanders ±25 around the patient's optimum (or current CPP), ending at the current MAP
+function simRun(n){
+  const d=derive(), p=PRESETS[S.preset], centre=(p.opt||d.cpp)-d.cpp;
+  for(let i=0;i<n;i++){const env=Math.min(1,(n-i)/60);simStep(3,env*(centre+25*Math.sin(3*Math.PI*i/n+0.4)));}
+  SIM.drift=0;
+}
+
+function binFit(){
+  const B=[];for(let c=40;c<130;c+=5)B.push({c:c+2.5,s:0,n:0});
+  SIM.rec.forEach(r=>{const i=Math.floor((r.cpp-40)/5);if(i>=0&&i<B.length){B[i].s+=r.prx;B[i].n++;}});
+  const bins=B.filter(b=>b.n>=6).map(b=>({c:b.c,m:b.s/b.n,n:b.n}));
+  if(bins.length<4)return {bins,fit:null};
+  // weighted quadratic, centred at 80
+  const M=[[0,0,0],[0,0,0],[0,0,0]],V=[0,0,0];
+  bins.forEach(b=>{const u=b.c-80,x=[1,u,u*u],wt=b.n;for(let i=0;i<3;i++){V[i]+=wt*x[i]*b.m;for(let j=0;j<3;j++)M[i][j]+=wt*x[i]*x[j];}});
+  const det=m=>m[0][0]*(m[1][1]*m[2][2]-m[1][2]*m[2][1])-m[0][1]*(m[1][0]*m[2][2]-m[1][2]*m[2][0])+m[0][2]*(m[1][0]*m[2][1]-m[1][1]*m[2][0]);
+  const D=det(M);if(Math.abs(D)<1e-9)return {bins,fit:null};
+  const col=(k)=>M.map((row,i)=>row.map((v,j)=>j===k?V[i]:v));
+  const [c0,c1,c2]=[0,1,2].map(k=>det(col(k))/D);
+  const f=x=>c0+c1*(x-80)+c2*(x-80)**2;
+  const lo=bins[0].c-2.5, hi=bins[bins.length-1].c+2.5;
+  let opt=null,lla=null,ula=null;
+  if(c2>0.0002){const u=-c1/(2*c2);if(u+80>lo&&u+80<hi)opt=u+80;
+    const disc=c1*c1-4*c2*(c0-0.25);if(disc>0&&opt){const r1=(-c1-Math.sqrt(disc))/(2*c2)+80,r2=(-c1+Math.sqrt(disc))/(2*c2)+80;
+      if(r1>lo)lla=r1;if(r2<hi)ula=r2;}}
+  return {bins,fit:{f,lo,hi,opt,lla,ula}};
+}
+
+// smooth scroll: display lags one sample and interpolates the head between the last two samples
+const VIEW={map:null,icp:null};
+function drawTrace(frac=0){
+  const {ctx,w,h}=fit($('#trace'));
+  const N=90, a=SIM.MAP.slice(-(N+2)), b=SIM.ICP.slice(-(N+2)), L=a.length;
+  if(L<3)return;
+  const x0=40,x1=w-8, lane=(h-26)/2, pad=8, dx=(x1-x0)/(N-1), R=L-2+frac;
+  const xs=i=>x1-(R-i)*dx;
+  const head=arr=>lerp(arr[L-2],arr[L-1],frac);
+  // PRx window (last 30 samples)
+  const wx=Math.max(x0,xs(L-30));ctx.fillStyle=COL.prx;ctx.globalAlpha=.1;ctx.fillRect(wx,0,x1-wx,h-22);ctx.globalAlpha=1;
+  ctx.strokeStyle=COL.prx;ctx.globalAlpha=.6;ctx.beginPath();ctx.moveTo(wx+.5,0);ctx.lineTo(wx+.5,h-22);ctx.stroke();ctx.globalAlpha=1;
+  const laneDraw=(arr,key,top,c,label)=>{
+    let mn=Infinity,mx=-Infinity;for(const v of arr){if(v<mn)mn=v;if(v>mx)mx=v;}
+    const mid=(mn+mx)/2,sp=Math.max(mx-mn,4)/2+1;
+    const tgt=[mid-sp,mid+sp], cur=VIEW[key]||tgt;
+    VIEW[key]=[lerp(cur[0],tgt[0],0.06),lerp(cur[1],tgt[1],0.06)];
+    [mn,mx]=VIEW[key];
+    const sy=v=>top+pad+(1-(v-mn)/(mx-mn))*(lane-2*pad);
+    ctx.strokeStyle=COL.grid;ctx.beginPath();ctx.moveTo(x0,top+lane-.5);ctx.lineTo(x1,top+lane-.5);ctx.stroke();
+    tag(ctx,label,x0+6,top+10,c,'left','middle');
+    tag(ctx,mx.toFixed(0),x0-4,sy(mx),COL.muted,'right','middle');tag(ctx,mn.toFixed(0),x0-4,sy(mn),COL.muted,'right','middle');
+    ctx.save();ctx.beginPath();ctx.rect(x0,top,x1-x0,lane);ctx.clip();
+    ctx.strokeStyle=c;ctx.lineWidth=2;ctx.lineJoin='round';ctx.beginPath();
+    for(let i=0;i<=L-2;i++){const X=xs(i),Y=sy(arr[i]);i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);}
+    ctx.lineTo(x1,sy(head(arr)));ctx.stroke();ctx.restore();};
+  laneDraw(a,'map',0,COL.map,'MAP');laneDraw(b,'icp',lane,COL.icp,'ICP');
+  ctx.font=MONO;ctx.fillStyle=COL.muted;ctx.textBaseline='bottom';
+  [[0,'−15 min'],[30,'−10'],[60,'−5'],[89,'now']].forEach(([i,l])=>{ctx.textAlign=i===89?'right':i===0?'left':'center';ctx.fillText(l,x0+i/(N-1)*(x1-x0),h-2);});
+}
+
+function prxColor(v){return v<0?COL.good:v<=0.25?COL.warn:COL.bad;}
+function drawU(sel='#ucurve',curCpp=null){
+  const {ctx,w,h}=fit($(sel)), d=derive(), {bins,fit:F}=binFit(), cpp=curCpp??d.cpp;
+  const A=axes(ctx,w,h,{x:[40,130],y:[-0.6,1],xt:[40,60,80,100,120],yt:[-0.5,0,0.25,0.5,1],yf:v=>fmt(v,v===0.25?2:1),xl:'CPP, mmHg',yl:'PRx',m:{l:44}});
+  dashed(ctx,A.x0,A.sy(0.25),A.x1,A.sy(0.25),COL.bad);if(w>=460)tag(ctx,'impaired',A.x1-2,A.sy(0.25)-3,COL.bad,'right');
+  const bw=(A.sx(45)-A.sx(40))*0.78;
+  bins.forEach(b=>{ctx.fillStyle=prxColor(b.m);ctx.globalAlpha=.7;const y=A.sy(b.m),y0=A.sy(0);ctx.fillRect(A.sx(b.c)-bw/2,Math.min(y,y0),bw,Math.abs(y-y0));});
+  ctx.globalAlpha=1;
+  if(F){ctx.strokeStyle=COL.prx;ctx.lineWidth=2.5;ctx.beginPath();let first=true;
+    for(let x=F.lo;x<=F.hi;x+=0.5){const y=F.f(x);if(y<-0.6||y>1){first=true;continue;}first?ctx.moveTo(A.sx(x),A.sy(y)):ctx.lineTo(A.sx(x),A.sy(y));first=false;}ctx.stroke();
+    if(F.opt){const X=A.sx(F.opt);ctx.strokeStyle=COL.prx;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(X,A.y1);ctx.lineTo(X,A.y0);ctx.stroke();
+      tag(ctx,'CPPopt '+F.opt.toFixed(0),X+5,A.y1+(w<460?26:12),COL.prx);}
+    [[F.lla,'LLA',-5,'right'],[F.ula,'ULA',5,'left']].forEach(([v,l,dx,al])=>{if(v){const X=A.sx(v);dashed(ctx,X,A.y1,X,A.y0,COL.bad);dot(ctx,X,A.sy(0.25),COL.bad,4);tag(ctx,l+' '+v.toFixed(0),X+dx,A.y1+12,COL.bad,al);}});}
+  // current CPP
+  const X=A.sx(clamp(cpp,40,130));dashed(ctx,X,A.y1,X,A.y0,COL.cpp);
+  ctx.fillStyle=COL.cpp;ctx.beginPath();ctx.moveTo(X,A.y0-1);ctx.lineTo(X-6,A.y0+8);ctx.lineTo(X+6,A.y0+8);ctx.fill();
+  if(sel!=='#ucurve')return;
+  // readouts
+  const opt=F&&F.opt;
+  $('#optOut').textContent=opt?opt.toFixed(0):'—';
+  if(opt){const dl=d.cpp-opt;$('#deltaOut').textContent=(dl>0?'+':dl<0?'−':'')+Math.abs(dl).toFixed(0);
+    $('#optPill').innerHTML=Math.abs(dl)<=3?pill('At CPPopt',COL.good):pill(dl<0?'Below opt':'Above opt',COL.warn);}
+  else{$('#deltaOut').textContent='—';$('#optPill').innerHTML=pill('No clear optimum',COL.muted);}
+}
+function prxReadout(){
+  const v=S.prx;$('#prxBig').textContent=v==null?'—':fmt(v,2);$('#prxBig').style.color=v==null?COL.muted:prxColor(v);
+  $('#prxPill').innerHTML=v==null?'':v<0?pill('Intact',COL.good):v<=0.25?pill('Borderline',COL.warn):pill('Impaired',COL.bad);
+  $$('[data-out="prx"]').forEach(e=>e.textContent=v==null?'—':fmt(v,2));
+}
+function drawPRx(){drawTrace(0);drawU();prxReadout();}
+$('#ff').onclick=()=>{simRun(1440);outputs();drawPRx();};
+$('#clr').onclick=()=>{SIM.rec=[];drawPRx();};
+
+/* ───────── ch4: oxygen & metabolism ───────── */
+const BASE4={hb:12,pao2:100,glu:120,paco2:40,map:90,edema:false,mito:false};
+Object.assign(S,BASE4,{scen4:new Set()});
+const SCEN4={
+  baseline:['Baseline',{}], anemia:['Anemia',{hb:7}], hypox:['Hypoxemia',{pao2:45}], hyperox:['FiO₂ 1.0',{pao2:400}],
+  hypervent:['Hyperventilation',{paco2:25}], lowcpp:['Low CPP',{map:62}], edema:['Edema',{edema:true}],
+  mito:['Mito failure',{mito:true}], glu:['Low glucose',{glu:65}],
+};
+const sat=p=>{const x=Math.pow(Math.max(p,1)/26.8,2.7);return x/(1+x);};
+const po2OfSat=s=>{s=clamp(s,0.01,0.995);return 26.8*Math.pow(s/(1-s),1/2.7);};
+function oxy(){
+  const d=derive(), q=Math.max(2,d.cbf), SaO2=sat(S.pao2);
+  const CaO2=1.34*S.hb*SaO2+0.003*S.pao2, cmro2=3.3*(S.mito?0.75:1)*(active===6&&C.sed?0.8:1);
+  const SvO2=Math.max(0.15,SaO2-cmro2/(q*1.34*S.hb/100));
+  const extra=0.08*(S.pao2-100), D=S.edema?0.5:0.85;
+  const pbto2=Math.max(0,D*(po2OfSat(SvO2)+extra));
+  const I=sig((12-pbto2)/2.5);
+  const glu=(S.glu/18)*0.2*clamp(q/50,0.3,1.2), gf=clamp(glu/1.2,0.3,1);
+  const pyr=135*(1-0.6*I)*gf*(S.mito?1.05:1);
+  const lac=2.8*(1+3*I+(S.mito?1.3:0))*Math.max(0.5,gf);
+  return {d,SaO2,CaO2,SvO2,extra,D,pbto2,glu,pyr,lac,lp:lac*1000/pyr};
+}
+const METERS={
+  icp:  {min:0, max:40, z:[[0,22,'good'],[22,40,'bad']]},
+  cpp:  {min:30,max:110,z:[[30,50,'bad'],[50,60,'warn'],[60,110,'good']]},
+  pbto2:{min:0, max:60, z:[[0,10,'bad'],[10,20,'warn'],[20,60,'good']]},
+  sjv:  {min:20,max:100,z:[[20,50,'bad'],[50,55,'warn'],[55,75,'good'],[75,100,'warn']]},
+  lp:   {min:0, max:100,z:[[0,25,'good'],[25,40,'warn'],[40,100,'bad']]},
+  glu:  {min:0, max:4,  z:[[0,0.8,'bad'],[0.8,4,'good']]},
+  lac:  {min:0, max:12, z:[[0,4,'good'],[4,12,'warn']]},
+  pyr:  {min:0, max:250,z:[[0,70,'warn'],[70,250,'good']]},
+};
+const mpct=(c,v)=>(v-c.min)/(c.max-c.min)*100;
+$$('.meter').forEach(m=>{const c=METERS[m.dataset.meter];
+  m.querySelector('.track').innerHTML=c.z.map(([a,b,k])=>`<i style="left:${mpct(c,a)}%;width:${mpct(c,b)-mpct(c,a)}%;background:var(--${k})"></i>`).join('')+'<b></b>';});
+function setMeter(k,v,txt){
+  const m=$(`.meter[data-meter="${k}"]`),c=METERS[k];
+  const z=c.z.find(([a,b])=>v>=a&&v<b)||c.z[v<c.min?0:c.z.length-1];
+  const el=m.querySelector('.v');el.textContent=txt;el.style.color=`var(--${z[2]})`;
+  m.querySelector('b').style.left=clamp(mpct(c,v),0,100)+'%';
+}
+$('#scen4').innerHTML=Object.entries(SCEN4).map(([k,[n]])=>`<button class="chip" data-scen="${k}">${n}</button>`).join('');
+// scenarios stack; a new one replaces any selected scenario that sets the same variable
+$$('[data-scen]').forEach(b=>b.onclick=()=>{
+  const k=b.dataset.scen, sel=S.scen4, keys=Object.keys(SCEN4[k][1]);
+  if(k==='baseline')sel.clear();
+  else if(sel.has(k))sel.delete(k);
+  else{[...sel].forEach(o=>{if(Object.keys(SCEN4[o][1]).some(x=>keys.includes(x)))sel.delete(o);});sel.add(k);}
+  Object.assign(S,BASE4);sel.forEach(o=>Object.assign(S,SCEN4[o][1]));
+  if(S.preset!=='tbi'||S.lesion!==40||S.drained){S.preset='tbi';S.lesion=40;S.drained=0;simReset();simRun(1440);}
+  sync();});
+$$('#ch4 input[data-bind]').forEach(el=>el.addEventListener('input',()=>{
+  [...S.scen4].forEach(o=>{if(el.dataset.bind in SCEN4[o][1])S.scen4.delete(o);});outputs4();}));
+
+function outputs4(){
+  const o=oxy(), set=(k,v)=>$$(`[data-out="${k}"]`).forEach(e=>e.textContent=v);
+  set('hbU',S.hb.toFixed(1)+' g/dL');set('pao2U',S.pao2+' mmHg');set('gluU',S.glu+' mg/dL');
+  setMeter('icp',o.d.icp,o.d.icp.toFixed(0));setMeter('cpp',o.d.cpp,o.d.cpp.toFixed(0));
+  setMeter('pbto2',o.pbto2,o.pbto2.toFixed(0));setMeter('sjv',o.SvO2*100,(o.SvO2*100).toFixed(0));
+  setMeter('lp',o.lp,o.lp.toFixed(0));setMeter('glu',o.glu,o.glu.toFixed(1));
+  setMeter('lac',o.lac,o.lac.toFixed(1));setMeter('pyr',o.pyr,o.pyr.toFixed(0));
+  $('#cao2').textContent=o.CaO2.toFixed(1);$('#sao2').textContent=(o.SaO2*100).toFixed(0)+'%';
+  const crisis=o.lp>40?(o.pyr<70?['Ischemic crisis',COL.bad]:['Non-ischemic crisis',COL.warn]):o.glu<0.8?['Low glucose',COL.bad]:o.pbto2<20?['Tissue hypoxia',COL.warn]:['Adequate',COL.good];
+  $('#crisis4').innerHTML=pill(crisis[0],crisis[1]);
+  $$('[data-scen]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.scen==='baseline'?S.scen4.size===0:S.scen4.has(b.dataset.scen)));
+}
+
+// Krogh cylinder: capillary unloads O2 along its length; tissue PO2 falls with distance from it
+const PO2STOPS=[[0,[26,11,46]],[8,[91,26,94]],[15,[176,48,92]],[22,[232,100,60]],[32,[244,169,59]],[50,[246,231,161]]];
+function po2Color(p){for(let i=1;i<PO2STOPS.length;i++){const [b,cb]=PO2STOPS[i],[a,ca]=PO2STOPS[i-1];
+  if(p<=b){const t=clamp((p-a)/(b-a),0,1);return `rgb(${ca.map((v,j)=>Math.round(lerp(v,cb[j],t))).join(',')})`;}}
+  return `rgb(${PO2STOPS[PO2STOPS.length-1][1].join(',')})`;}
+const KRBC=Array.from({length:22},(_,i)=>({x:i/22+Math.random()*0.02}));
+function drawKrogh(t,dt){
+  const {ctx,w,h}=fit($('#krogh')), o=oxy();
+  const H=h-26, capH=Math.max(12,H*0.13), tissueH=(H-capH)/2, cols=96, rows=16, cw=w/cols, ch=tissueH/rows;
+  const k=clamp((1-o.D)*2.4,0,0.98), cy=H/2;
+  const pcap=x=>po2OfSat(o.SaO2-(o.SaO2-o.SvO2)*x)+o.extra*(1-0.5*x);
+  for(let c=0;c<cols;c++){const pc=pcap((c+.5)/cols);
+    for(let r=0;r<rows;r++){const P=Math.max(0,pc*(1-k*Math.pow((r+.5)/rows,1.5)));ctx.fillStyle=po2Color(P);
+      ctx.fillRect(c*cw,cy-capH/2-(r+1)*ch,cw+.6,ch+.6);ctx.fillRect(c*cw,cy+capH/2+r*ch,cw+.6,ch+.6);}}
+  // capillary: bright arterial → darker venous
+  const gr=ctx.createLinearGradient(0,0,w,0),s2c=s=>`rgb(${Math.round(lerp(90,225,s))},${Math.round(lerp(30,45,s))},${Math.round(lerp(80,55,s))})`;
+  gr.addColorStop(0,s2c(o.SaO2));gr.addColorStop(1,s2c(o.SvO2));
+  ctx.fillStyle=gr;ctx.fillRect(0,cy-capH/2,w,capH);
+  const spd=o.d.cbf/50*0.12;
+  KRBC.forEach(c=>{c.x=(c.x+spd*dt)%1;ctx.fillStyle=s2c(o.SaO2-(o.SaO2-o.SvO2)*c.x);ctx.strokeStyle='rgba(0,0,0,.35)';
+    ctx.beginPath();ctx.ellipse(c.x*w,cy,capH*0.42,capH*0.3,0,0,7);ctx.fill();ctx.stroke();});
+  boxTag(ctx,'arterial',6,cy,'left');boxTag(ctx,'venous',w-6,cy,'right');
+  // probe
+  const px=w*0.62, py=cy-capH/2-tissueH*0.5;
+  ctx.strokeStyle=COL.text;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(px,0);ctx.lineTo(px,py);ctx.stroke();
+  ctx.fillStyle=COL.text;ctx.beginPath();ctx.arc(px,py,4,0,7);ctx.fill();
+  ctx.font='600 13px "IBM Plex Mono", monospace';ctx.fillStyle=COL.text;ctx.textAlign='left';ctx.textBaseline='middle';
+  const lbl='PbtO₂ '+o.pbto2.toFixed(0);const tw=ctx.measureText(lbl).width;
+  ctx.fillStyle=COL.panel;ctx.fillRect(px+8,py-10,tw+10,20);ctx.fillStyle=COL.text;ctx.fillText(lbl,px+13,py);
+  // colour key
+  const lx=0,ly=h-12,lw=Math.min(220,w*0.5);
+  for(let i=0;i<lw;i++){ctx.fillStyle=po2Color(i/lw*50);ctx.fillRect(lx+i,ly,1.2,8);}
+  tag(ctx,'0',lx,ly-2,COL.muted,'left');tag(ctx,'25',lx+lw/2,ly-2,COL.muted,'center');tag(ctx,'50 mmHg',lx+lw,ly-2,COL.muted,'left');
+}
+
+/* ───────── ch5: vasospasm & DCI ───────── */
+const COURSES={spasm:{name:'Vasospasm',peak:240,ica:0,isch:true},hyper:{name:'Hyperemia',peak:175,ica:38,isch:false},none:{name:'Uncomplicated',peak:105,ica:4,isch:false}};
+const V={course:'spasm',day:6.5,play:false,D:null,img:null};
+function rng(seed){return()=>{seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const FB=40, HRS=14*24;
+function spectrum(I,r,hr){
+  const Aa=(1-0.4*I)*(0.9+0.2*r())*(1-0.04*Math.cos(2*Math.PI*hr/24)), Ad=(1+0.25*I)*(0.9+0.2*r());
+  const out=[];for(let i=0;i<FB;i++){const f=(i+0.5)*0.5;
+    out.push(2.2*Ad*Math.exp(-((f-2)**2)/2.42)+0.6*Math.exp(-((f-6)**2)/4.5)+1.4*Aa*Math.exp(-((f-10)**2)/3.38)+0.35*Math.exp(-((f-17)**2)/18)+0.5/(f+0.7)+0.05*r());}
+  return out;}
+const CSA=[[0,[8,12,40]],[0.25,[20,60,160]],[0.45,[20,170,190]],[0.62,[90,200,90]],[0.8,[245,210,60]],[1,[230,60,40]]];
+function csaRGB(t){for(let i=1;i<CSA.length;i++){const [b,cb]=CSA[i],[a,ca]=CSA[i-1];if(t<=b){const u=(t-a)/(b-a);return ca.map((v,j)=>lerp(v,cb[j],u));}}return CSA[CSA.length-1][1];}
+function buildCourse(){
+  const c=COURSES[V.course], r=rng(11);
+  const D={mca:[],ica:[],I:[],adr:[],adrS:[],gcs:[]}, spec=[];
+  for(let h=0;h<=HRS;h++){const d=h/24;
+    const b=Math.exp(-(((d-7.5)/2.6)**2))*sig((d-3)/0.45);
+    const mca=65+(c.peak-65)*b+6*(r()-.5), ica=38+c.ica*b+3*(r()-.5), I=c.isch?sig((mca-165)/16):0;
+    const sp=spectrum(I,r,h);let a=0,dl=0;
+    for(let i=0;i<FB;i++){const f=(i+.5)*.5;if(f>=8&&f<13)a+=sp[i];if(f>=1&&f<4)dl+=sp[i];}
+    D.mca.push(mca);D.ica.push(ica);D.I.push(I);D.adr.push(a/dl);spec.push(sp);
+    D.gcs.push(14-Math.round(3*sig((I-0.85)/0.03)));}
+  const base=D.adr.slice(24,48).reduce((s,v)=>s+v,0)/24;
+  D.adr=D.adr.map(v=>(v/base-1)*100);
+  D.adr.forEach((_,h)=>{const s=D.adr.slice(Math.max(0,h-5),h+1);D.adrS.push(s.reduce((a,b)=>a+b,0)/s.length);});
+  D.eeg=D.adrS.findIndex((v,h)=>h>48&&v<=-10); D.exam=D.gcs.findIndex(g=>g<14);
+  const cv=document.createElement('canvas');cv.width=HRS+1;cv.height=FB;const x=cv.getContext('2d'),im=x.createImageData(HRS+1,FB);
+  let mx=0;spec.forEach(s=>s.forEach(v=>{if(v>mx)mx=v;}));const hi=Math.log10(mx),lo=hi-1.6;
+  spec.forEach((s,h)=>s.forEach((v,i)=>{const [R,G,B]=csaRGB(clamp((Math.log10(v)-lo)/(hi-lo),0,1)),o=((FB-1-i)*(HRS+1)+h)*4;
+    im.data[o]=R;im.data[o+1]=G;im.data[o+2]=B;im.data[o+3]=255;}));
+  x.putImageData(im,0,0);V.D=D;V.img=cv;
+}
+$('#course5').innerHTML=Object.entries(COURSES).map(([k,c])=>`<button class="chip" data-course="${k}">${c.name}</button>`).join('');
+$$('[data-course]').forEach(b=>b.onclick=()=>{V.course=b.dataset.course;buildCourse();drawStatic();});
+$('#day5').addEventListener('input',e=>{V.day=+e.target.value;drawStatic();});
+$('#play5').onclick=()=>{V.play=!V.play;if(V.play&&V.day>=13.95)V.day=0;$('#play5').textContent=V.play?'Pause':'Play';};
+
+function drawTimeline(){
+  const {ctx,w,h}=fit($('#timeline')), D=V.D;
+  const x0=46,x1=w-10, sx=d=>x0+d/14*(x1-x0), hx=i=>sx(i/24);
+  const L=[['CSA',80],['ADR',70],['TCD',92],['GCS',44]], gap=10;
+  let y=16;const lanes={};L.forEach(([k,lh])=>{lanes[k]=[y,y+lh];y+=lh+gap;});
+  const yEnd=y-gap;
+  // risk window
+  ctx.fillStyle=COL.warn;ctx.globalAlpha=.07;ctx.fillRect(sx(3),0,sx(14)-sx(3),yEnd);ctx.globalAlpha=1;
+  tag(ctx,'risk window',sx(3)+4,12,COL.warn,'left','bottom');
+  const lab=(k)=>{const [a]=lanes[k];ctx.font=COND;ctx.fillStyle=COL.muted;ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText(k,2,a);};
+  // CSA
+  {const [a,b]=lanes.CSA;ctx.imageSmoothingEnabled=true;ctx.drawImage(V.img,x0,a,x1-x0,b-a);lab('CSA');
+    tag(ctx,'20',x0-4,a+6,COL.muted,'right','middle');tag(ctx,'0 Hz',x0-4,b-4,COL.muted,'right','middle');}
+  // ADR
+  {const [a,b]=lanes.ADR,sy=v=>a+(1-(v+60)/80)*(b-a);lab('ADR');
+    ctx.strokeStyle=COL.grid;ctx.beginPath();ctx.moveTo(x0,sy(0));ctx.lineTo(x1,sy(0));ctx.stroke();
+    dashed(ctx,x0,sy(-10),x1,sy(-10),COL.bad);tag(ctx,'−10%',x0-4,sy(-10),COL.bad,'right','middle');tag(ctx,'0',x0-4,sy(0),COL.muted,'right','middle');
+    ctx.strokeStyle=COL.prx;ctx.globalAlpha=.3;ctx.lineWidth=1;ctx.beginPath();D.adr.forEach((v,i)=>{const Y=sy(clamp(v,-60,20));i?ctx.lineTo(hx(i),Y):ctx.moveTo(hx(i),Y);});ctx.stroke();
+    ctx.globalAlpha=1;ctx.lineWidth=2;ctx.beginPath();D.adrS.forEach((v,i)=>{const Y=sy(clamp(v,-60,20));i?ctx.lineTo(hx(i),Y):ctx.moveTo(hx(i),Y);});ctx.stroke();}
+  // TCD
+  {const [a,b]=lanes.TCD,sy=v=>a+(1-v/260)*(b-a);lab('TCD');
+    ctx.strokeStyle=COL.grid;ctx.beginPath();ctx.moveTo(x0,b);ctx.lineTo(x1,b);ctx.stroke();
+    dashed(ctx,x0,sy(120),x1,sy(120),COL.warn);dashed(ctx,x0,sy(200),x1,sy(200),COL.bad);
+    tag(ctx,'120',x0-4,sy(120),COL.warn,'right','middle');tag(ctx,'200',x0-4,sy(200),COL.bad,'right','middle');
+    [[D.ica,COL.muted],[D.mca,COL.mca]].forEach(([arr,c])=>{ctx.strokeStyle=c;ctx.lineWidth=2;ctx.beginPath();arr.forEach((v,i)=>{const Y=sy(v);i?ctx.lineTo(hx(i),Y):ctx.moveTo(hx(i),Y);});ctx.stroke();});}
+  // GCS
+  {const [a,b]=lanes.GCS,sy=v=>a+(1-(v-10)/5)*(b-a);lab('GCS');
+    tag(ctx,'14',x0-4,sy(14),COL.muted,'right','middle');tag(ctx,'11',x0-4,sy(11),COL.muted,'right','middle');
+    ctx.strokeStyle=COL.text;ctx.lineWidth=2;ctx.beginPath();D.gcs.forEach((v,i)=>{const X=hx(i),Y=sy(v);if(!i)ctx.moveTo(X,Y);else{ctx.lineTo(X,sy(D.gcs[i-1]));ctx.lineTo(X,Y);}});ctx.stroke();}
+  // alarms
+  if(D.eeg>0){const X=hx(D.eeg);dashed(ctx,X,16,X,yEnd,COL.prx);boxTag(ctx,'EEG alarm',X-4,lanes.ADR[0]+10,'right',COL.prx);}
+  if(D.exam>0){const X=hx(D.exam);dashed(ctx,X,16,X,yEnd,COL.bad);boxTag(ctx,'Exam ↓',X+4,lanes.TCD[0]+10,'left',COL.bad);}
+  if(D.eeg>0&&D.exam>0){const a=hx(D.eeg),b=hx(D.exam),Y=lanes.GCS[1]+2;
+    ctx.strokeStyle=COL.cpp;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(a,Y);ctx.lineTo(b,Y);ctx.stroke();
+    tag(ctx,'EEG lead '+(D.exam-D.eeg)+' h',(a+b)/2,Y+2,COL.cpp,'center','top');}
+  // x axis
+  ctx.font=MONO;ctx.fillStyle=COL.muted;ctx.textBaseline='bottom';
+  for(let d=0;d<=14;d+=2){ctx.textAlign=d===0?'left':d===14?'right':'center';ctx.fillText(d===0?'Day 0':d,sx(d),h-1);}
+  // cursor
+  const X=sx(V.day);ctx.strokeStyle=COL.cpp;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(X,14);ctx.lineTo(X,yEnd);ctx.stroke();
+  ctx.fillStyle=COL.cpp;ctx.beginPath();ctx.moveTo(X,14);ctx.lineTo(X-5,6);ctx.lineTo(X+5,6);ctx.fill();
+}
+function outputs5(){
+  const D=V.D,i=clamp(Math.round(V.day*24),0,HRS), mca=D.mca[i], ica=D.ica[i], lr=mca/ica;
+  const dd=Math.floor(V.day+1e-6), hh=Math.round((V.day-dd)*24)%24;
+  $('#dayOut').textContent=`Day ${dd} · ${String(hh).padStart(2,'0')}:00`;
+  $('#day5').value=V.day;
+  $('#mcaOut').textContent=mca.toFixed(0);$('#icaOut').textContent=ica.toFixed(0);$('#lrOut').textContent=lr.toFixed(1);
+  $('#adrOut').textContent=(D.adrS[i]>0?'+':D.adrS[i]<0?'−':'')+Math.abs(D.adrS[i]).toFixed(0)+'%';
+  $('#gcsOut').textContent=D.gcs[i];
+  $('#tcdPill').innerHTML=mca<120?pill('TCD normal',COL.good):lr<3?pill('Hyperemia',COL.icp):lr<6?pill('Vasospasm',COL.warn):pill('Severe vasospasm',COL.bad);
+  $('#eegPill').innerHTML=D.I[i]>0.3?pill('Alpha lost',COL.bad):pill('Alpha preserved',COL.good);
+  $$('[data-course]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.course===V.course));
+}
+function drawEEG(t){
+  const {ctx,w,h}=fit($('#eeg')), I=V.D.I[clamp(Math.round(V.day*24),0,HRS)];
+  const Aa=1-0.85*I, Ad=1+0.7*I, span=10, cy=h/2, k=h*0.16;
+  ctx.strokeStyle=COL.grid;ctx.beginPath();for(let s=0;s<=span;s++){const X=Math.round(s/span*w)+.5;ctx.moveTo(X,0);ctx.lineTo(X,h);}ctx.stroke();
+  ctx.strokeStyle=COL.text;ctx.lineWidth=1.3;ctx.beginPath();
+  for(let i=0;i<=w;i++){const tt=t+i/w*span;
+    const v=Aa*(0.75+0.35*Math.sin(tt*1.9))*Math.sin(2*Math.PI*10*tt)+Ad*0.9*Math.sin(2*Math.PI*1.7*tt+Math.sin(tt*0.7))
+      +0.35*Ad*Math.sin(2*Math.PI*3.1*tt+1)+0.25*Math.sin(2*Math.PI*5.5*tt)+0.12*Math.sin(2*Math.PI*17*tt)+0.08*Math.sin(2*Math.PI*23*tt+2);
+    const Y=cy-v*k;i?ctx.lineTo(i,Y):ctx.moveTo(i,Y);}
+  ctx.stroke();
+  tag(ctx,'1 s',w/span/2,h-2,COL.muted,'center','bottom');
+}
+buildCourse();
+
+/* ───────── ch6: virtual patient ───────── */
+const C0={osmo:0,sed:false,hob:false,spasm:0};
+const C={...C0};
+const PKEYS=['preset','lesion','drained','map','paco2','hb','pao2','glu','edema','mito'];
+const pick=o=>Object.fromEntries(PKEYS.map(k=>[k,o[k]]));
+const CASE_BASE={preset:'tbi',drained:0,paco2:40,hb:12,pao2:100,glu:120,edema:false,mito:false};
+const CASES={
+  tbi:{name:'TBI · rising ICP',short:'TBI',start:{lesion:40,map:90},ct:'tbi',
+    hx:'34M, motorcycle crash. GCS 6 at scene, intubated. ICU day 1.',
+    ctx:'R frontotemporal contusion, thin R SDH, 3 mm midline shift.',
+    on:'Propofol + fentanyl, norepinephrine 0.05, EVD at 20 cmH₂O.',
+    exam:d=>d.icp>40?'E1 VT M3 (extensor) · R pupil 7 mm fixed':d.icp>28?'E1 VT M4 · R pupil 5 mm, sluggish':'E1 VT M5 (localizes) · pupils 3 mm, brisk',
+    take:'Tiered care: HOB and sedation, then CSF drainage and osmotherapy. Hyperventilate briefly, watching PbtO₂.'},
+  sah:{name:'SAH day 7 · new spasm',short:'SAH spasm',start:{lesion:15,map:90},ct:'sah',
+    hx:'56F, thunderclap headache. Hunt–Hess 2, modified Fisher 3. Post-bleed day 7.',
+    ctx:'Thick basal cistern SAH; ACom aneurysm coiled day 0.',
+    on:'Nimodipine 60 mg q4h, euvolemia, EEG + daily TCD.',
+    exam:d=>d.pb<12?'GCS 11 · L hemiparesis, neglect':d.pb<15?'GCS 13 · new L arm drift':'GCS 14 · confused, no focal deficit',
+    take:'The EEG alarms first. Induced hypertension buys flow through the spasm; angiography treats the vessel.'},
+  opt:{name:'CPPopt targeting',short:'CPPopt',start:{lesion:40,map:76},ct:'opt',
+    hx:'41M, fall from height. GCS 7, intubated. ICU day 2.',
+    ctx:'Bilateral frontal contusions, effaced sulci. No surgical lesion.',
+    on:'Propofol + fentanyl, norepinephrine 0.03, ICP bolt + PbtO₂ probe.',
+    exam:()=>'E1 VT M5 · pupils 3 mm, brisk',
+    take:'Moving CPP up to CPPopt drops PRx and lifts PbtO₂.'},
+};
+const TX={
+  hob: {l:'HOB 30°',          s:'HOB', tog:()=>{C.hob=!C.hob;},             on:()=>C.hob},
+  sed: {l:'Deepen sedation',  s:'Sed', tog:()=>{C.sed=!C.sed;},             on:()=>C.sed},
+  evd: {l:'Drain CSF 5 mL',   s:'EVD', act:()=>{S.drained=Math.min(25,S.drained+5);}},
+  osmo:{l:'23.4% saline',     s:'Osmo',act:()=>{C.osmo+=8;CAP.na+=4;}},
+  hv:  {l:'Hyperventilate',   s:'HV',  tog:()=>{S.paco2=S.paco2<38?40:32;}, on:()=>S.paco2<38},
+  fio2:{l:'FiO₂ ↑',           s:'FiO₂',tog:()=>{S.pao2=S.pao2>150?100:250;},on:()=>S.pao2>150},
+  prbc:{l:'Transfuse 1 unit', s:'PRBC',act:()=>{S.hb=Math.min(15,S.hb+1);}},
+  ia:  {l:'Angio / IA therapy',s:'IA', act:()=>{if(CAP.ia==null)CAP.ia=CAP.t;},only:'sah'},
+};
+const CAP={na:140,exam:'',case:'tbi',t:0,run:false,speed:1,acc:0,log:[],ev:[],opt:null,ia:null,started:false,saved:null,caseS:null};
+const cbfEff=(cpp,s)=>s?Math.max(3,cbf(cpp)*(1-0.65*s)+s*0.35*(cpp-75)):cbf(cpp);
+const hm=t=>`${Math.floor(t/60)}:${String(Math.round(t%60)).padStart(2,'0')}`;
+const dur=m=>m<60?`${m} min`:`${Math.floor(m/60)} h ${m%60} min`;
+
+function startCase(k){
+  CAP.case=k;CAP.na=140;CAP.exam='';CAP.t=0;CAP.acc=0;CAP.log=[];CAP.ev=[];CAP.ia=null;CAP.opt=null;CAP.run=true;CAP.started=true;
+  Object.assign(C,C0);Object.assign(S,CASE_BASE,CASES[k].start);
+  simReset();simRun(1440);
+  const F=binFit().fit;CAP.opt=F&&F.opt?F.opt:null;
+  $('#debrief6').hidden=true;
+  capLog();ui6();drawCT();drawMonitor();outputs();
+}
+function capLog(){
+  const o=oxy(), n=6, m=SIM.MAP.slice(-n), i=SIM.ICP.slice(-n);
+  const map=m.reduce((a,b)=>a+b,0)/m.length, icp=i.reduce((a,b)=>a+b,0)/i.length;
+  const adr=-50*(sig((18-o.pbto2)/3)-sig(-3))+(Math.random()-.5)*4;
+  CAP.log.push({t:CAP.t,map,icp,cpp:map-icp,prx:S.prx,pbto2:o.pbto2+(Math.random()-.5),adr,opt:CAP.opt});
+}
+function capStep(){
+  CAP.t++;const t=CAP.t;
+  if(CAP.case==='tbi'){if(t>15)S.lesion=Math.min(70,S.lesion+4/60);if(t===60)S.lesion+=6;}
+  if(CAP.case==='sah'){const ia=CAP.ia!=null,tgt=ia?0.15:clamp((t-30)/60,0,0.9);C.spasm+=(tgt-C.spasm)*(ia?0.08:0.2);}
+  C.osmo*=Math.exp(-Math.LN2/120);CAP.na=Math.max(140,CAP.na-0.5/60);
+  for(let i=0;i<6;i++)simStep(2);
+  if(t%5===0){const F=binFit().fit;CAP.opt=F&&F.opt?F.opt:null;}
+  capLog();caseCard();
+  if(t>=360){CAP.run=false;debrief();}
+}
+function ui6(){
+  $('#case6').innerHTML=Object.entries(CASES).map(([k,c])=>`<button class="chip" data-case="${k}" aria-pressed="${k===CAP.case}" title="${c.name}">${c.short}</button>`).join('');
+  $$('[data-case]').forEach(b=>b.onclick=()=>startCase(b.dataset.case));
+  $('#tx6').innerHTML=Object.entries(TX).filter(([,x])=>!x.only||x.only===CAP.case)
+    .map(([k,x])=>`<button class="btn" data-tx="${k}"${x.tog?' aria-pressed="false"':''}>${x.l}</button>`).join('');
+  $$('[data-tx]').forEach(b=>b.onclick=()=>{const x=TX[b.dataset.tx];if(CAP.t>=360)return;
+    (x.tog||x.act)();CAP.ev.push({t:CAP.t,s:x.s+(x.tog?(x.on()?'':' off'):'')});sync();txState();drawMonitor();});
+  $$('[data-speed]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.speed===CAP.speed));
+  txState();
+}
+function caseCard(){
+  const c=CASES[CAP.case], L=CAP.log, win=L.slice(-(CAP.case==='sah'?45:15));
+  const avg=f=>win.length?win.reduce((a,r)=>a+f(r),0)/win.length:0;
+  const ex=c.exam({icp:avg(r=>r.icp),pb:avg(r=>r.pbto2)});
+  if(CAP.exam&&ex!==CAP.exam)CAP.ev.push({t:CAP.t,s:'Exam'});
+  CAP.exam=ex;
+  $('#ccTitle').textContent=c.name;$('#ccHx').textContent=c.hx;$('#ccCT').textContent=c.ctx;$('#ccOn').textContent=c.on;
+  $('#ccExam').textContent=ex;$('.cc-exam').classList.toggle('changed',ex!==c.exam({icp:0,pb:30}));
+  const pH=7.40-0.008*(S.paco2-40), osm=2*CAP.na+S.glu/18+5;
+  const rows=[['Na',CAP.na.toFixed(0),CAP.na>155?COL.bad:CAP.na>150?COL.warn:COL.text],['Osm',osm.toFixed(0),osm>320?COL.bad:COL.text],
+    ['Gluc',S.glu+' mg/dL',COL.text],['Hb',S.hb.toFixed(1),S.hb<8?COL.warn:COL.text],
+    ['ABG',`${pH.toFixed(2)}/${S.paco2}/${S.pao2}`,S.paco2<35?COL.warn:COL.text],['Lactate','1.1',COL.text]];
+  $('#labs6').innerHTML=rows.map(([k,v,col])=>`<dt>${k}</dt><dd style="color:${col}">${v}</dd>`).join('');
+}
+// schematic axial CT, radiological convention (patient's right on image left)
+function drawCT(){
+  const cv=$('#ct6'),{ctx,w,h}=fit(cv),cx=w/2,cy=h/2,R=w*0.4,type=CASES[CAP.case].ct;
+  ctx.fillStyle='#050505';ctx.fillRect(0,0,w,h);
+  ctx.fillStyle='#ececec';ctx.beginPath();ctx.ellipse(cx,cy,R*0.86,R,0,0,7);ctx.fill();
+  const sh=type==='tbi'?-R*0.08:0;
+  ctx.fillStyle='#7c7c7c';ctx.beginPath();ctx.ellipse(cx,cy,R*0.78,R*0.92,0,0,7);ctx.fill();
+  ctx.save();ctx.beginPath();ctx.ellipse(cx,cy,R*0.78,R*0.92,0,0,7);ctx.clip();
+  // ventricles
+  const vs=type==='opt'?0.55:1;ctx.fillStyle='#2a2a2a';
+  [-1,1].forEach(sd=>{ctx.beginPath();ctx.ellipse(cx-sh+sd*R*0.1,cy-R*0.05,R*0.05*vs,R*0.2*vs,sd*0.25,0,7);ctx.fill();});
+  ctx.strokeStyle='#9a9a9a';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(cx,cy-R*0.92);ctx.quadraticCurveTo(cx-sh*2,cy,cx,cy+R*0.92);ctx.stroke();
+  if(type==='tbi'){ // right-sided lesions drawn on image left
+    ctx.fillStyle='#5e5e5e';ctx.beginPath();ctx.ellipse(cx-R*0.5,cy-R*0.25,R*0.26,R*0.2,0.4,0,7);ctx.fill();
+    ctx.fillStyle='#e2e2e2';[[-0.52,-0.28,0.1],[-0.42,-0.18,0.06],[-0.58,-0.12,0.05]].forEach(([x,y,r])=>{ctx.beginPath();ctx.arc(cx+x*R,cy+y*R,r*R,0,7);ctx.fill();});
+    ctx.strokeStyle='#dcdcdc';ctx.lineWidth=R*0.06;ctx.beginPath();ctx.ellipse(cx,cy,R*0.75,R*0.89,0,Math.PI*0.72,Math.PI*1.3);ctx.stroke();}
+  if(type==='sah'){ctx.strokeStyle='#e0e0e0';ctx.lineWidth=R*0.07;ctx.lineCap='round';ctx.beginPath();
+    [[-0.55,-0.05],[0.55,-0.05],[-0.15,-0.45],[0.15,-0.45],[0,0.3]].forEach(([x,y])=>{ctx.moveTo(cx,cy);ctx.lineTo(cx+x*R,cy+y*R);});ctx.stroke();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(cx,cy-R*0.12,R*0.06,0,7);ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=1;for(let a=0;a<6;a++){ctx.beginPath();ctx.moveTo(cx,cy-R*0.12);ctx.lineTo(cx+Math.cos(a)*R*0.5,cy-R*0.12+Math.sin(a)*R*0.5);ctx.stroke();}}
+  if(type==='opt'){[[-0.3,-0.55],[0.32,-0.5],[-0.2,-0.42],[0.22,-0.62]].forEach(([x,y])=>{ctx.fillStyle='#5e5e5e';ctx.beginPath();ctx.arc(cx+x*R,cy+y*R,R*0.12,0,7);ctx.fill();
+    ctx.fillStyle='#e2e2e2';ctx.beginPath();ctx.arc(cx+x*R,cy+y*R,R*0.05,0,7);ctx.fill();});}
+  ctx.restore();
+  ctx.font='600 10px "IBM Plex Mono", monospace';ctx.fillStyle='#bbb';ctx.textBaseline='top';ctx.textAlign='left';ctx.fillText('R',5,5);ctx.textAlign='right';ctx.fillText('L',w-5,5);
+}
+function txState(){
+  $$('[data-tx]').forEach(b=>{const x=TX[b.dataset.tx];if(x.tog)b.setAttribute('aria-pressed',x.on());
+    if(b.dataset.tx==='ia')b.disabled=CAP.ia!=null;});
+  $('#run6').textContent=CAP.t>=360?'Done':CAP.run?'Pause':'Resume';$('#run6').disabled=CAP.t>=360;
+  $('#clock6').textContent=`${hm(CAP.t)} / 6:00`;
+  caseCard();
+}
+$$('[data-speed]').forEach(b=>b.onclick=()=>{CAP.speed=+b.dataset.speed;ui6();});
+$('#run6').onclick=()=>{CAP.run=!CAP.run;txState();};
+$('#restart6').onclick=()=>startCase(CAP.case);
+
+function nums6(){
+  const L=CAP.log[CAP.log.length-1];if(!L)return;
+  const opt=CAP.opt, st=(v,bad,warn)=>bad?COL.bad:warn?COL.warn:COL.text;
+  const rows=[
+    ['MAP',L.map.toFixed(0),COL.map],['ICP',L.icp.toFixed(0),L.icp>22?COL.bad:COL.icp],
+    ['CPP',L.cpp.toFixed(0),opt&&Math.abs(L.cpp-opt)<=5?COL.good:COL.cpp],['CPPopt',opt?opt.toFixed(0):'—',COL.prx],
+    ['PRx',L.prx==null?'—':fmt(L.prx,2),L.prx>0.25?COL.bad:L.prx>0?COL.warn:COL.good],
+    ['PbtO₂',L.pbto2.toFixed(0),L.pbto2<10?COL.bad:L.pbto2<20?COL.warn:COL.cbf],
+    ['ADR Δ',(L.adr<0?'−':'+')+Math.abs(L.adr).toFixed(0)+'%',L.adr<-10?COL.bad:COL.text],
+    ['PaCO₂',S.paco2,S.paco2<35?COL.warn:COL.text],['Hb',S.hb.toFixed(0),S.hb<8?COL.warn:COL.text],
+  ];
+  $('#nums6').innerHTML=rows.map(([k,v,c])=>`<div class="num"><span class="k">${k}</span><span class="v" style="color:${c}">${v}</span></div>`).join('');
+}
+function drawMonitor(){
+  const {ctx,w,h}=fit($('#mon6')), Lg=CAP.log;
+  const x0=46,x1=w-8, sx=t=>x0+t/360*(x1-x0);
+  const L=[['mmHg',128,[0,130]],['PRx',62,[-1,1]],['PbtO₂',66,[0,50]],['ADR',56,[-60,20]]], gap=10;
+  let y=22;const lane={};L.forEach(([k,lh,dom])=>{const top=y;lane[k]={a:top,b:top+lh,sy:v=>top+lh-(clamp(v,dom[0],dom[1])-dom[0])/(dom[1]-dom[0])*lh};y+=lh+gap;});
+  const yEnd=y-gap;
+  // grid + labels
+  ctx.font=MONO;
+  for(let hr=0;hr<=6;hr++){const X=Math.round(sx(hr*60))+.5;ctx.strokeStyle=COL.grid;ctx.beginPath();ctx.moveTo(X,22);ctx.lineTo(X,yEnd);ctx.stroke();
+    tag(ctx,hr+' h',X,h-1,COL.muted,hr===0?'left':hr===6?'right':'center','bottom');}
+  Object.entries(lane).forEach(([k,l])=>{ctx.font=COND;ctx.fillStyle=COL.muted;ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText(k.toUpperCase(),2,l.a);
+    ctx.strokeStyle=COL.line;ctx.beginPath();ctx.moveTo(x0,l.b+.5);ctx.lineTo(x1,l.b+.5);ctx.stroke();});
+  const thr=(k,v,c,txt)=>{const Y=lane[k].sy(v);dashed(ctx,x0,Y,x1,Y,c);tag(ctx,txt,x0-4,Y,c,'right','middle');};
+  thr('mmHg',22,COL.bad,'22');tag(ctx,'100',x0-4,lane.mmHg.sy(100),COL.muted,'right','middle');
+  thr('PRx',0.25,COL.bad,'.25');
+  thr('PbtO₂',20,COL.warn,'20');thr('ADR',-10,COL.bad,'−10');
+  const line=(k,f,c,lw=1.8)=>{ctx.strokeStyle=c;ctx.lineWidth=lw;ctx.beginPath();let pen=false;
+    Lg.forEach(r=>{const v=f(r);if(v==null){pen=false;return;}const X=sx(r.t),Y=lane[k].sy(v);pen?ctx.lineTo(X,Y):ctx.moveTo(X,Y);pen=true;});ctx.stroke();};
+  // CPPopt band
+  ctx.fillStyle=COL.prx;ctx.globalAlpha=.14;
+  Lg.forEach((r,i)=>{if(!r.opt||!i)return;const X0=sx(Lg[i-1].t),X1=sx(r.t),ya=lane.mmHg.sy(r.opt+5),yb=lane.mmHg.sy(r.opt-5);ctx.fillRect(X0,ya,X1-X0+.5,yb-ya);});
+  ctx.globalAlpha=1;
+  line('mmHg',r=>r.map,COL.map);line('mmHg',r=>r.cpp,COL.cpp,2.2);line('mmHg',r=>r.icp,COL.icp,2.2);
+  line('mmHg',r=>r.opt,COL.prx,1);
+  line('PRx',r=>r.prx,COL.prx);line('PbtO₂',r=>r.pbto2,COL.cbf,2);line('ADR',r=>r.adr,COL.text,1.5);
+  // lane keys
+  [['MAP',COL.map],['CPP',COL.cpp],['ICP',COL.icp],['CPPopt ±5',COL.prx]].reduce((x,[t,c])=>{tag(ctx,t,x,lane.mmHg.a+10,c,'left','middle');ctx.font=MONO;return x+ctx.measureText(t).width+14;},x0+6);
+  // events
+  CAP.ev.forEach((e,i)=>{const X=sx(e.t);ctx.strokeStyle=COL.text;ctx.globalAlpha=.35;ctx.beginPath();ctx.moveTo(X+.5,20);ctx.lineTo(X+.5,yEnd);ctx.stroke();ctx.globalAlpha=1;
+    tag(ctx,e.s,X+2,i%2?20:10,COL.text,'left','bottom');});
+  // now
+  const X=sx(CAP.t);ctx.strokeStyle=COL.cpp;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(X,22);ctx.lineTo(X,yEnd);ctx.stroke();
+  nums6();
+  const last=Lg[Lg.length-1];drawU('#u6',last?last.cpp:null);
+}
+function debrief(){
+  const Lg=CAP.log,n=Lg.length,cnt=f=>Lg.filter(f).length;
+  const icpHi=cnt(r=>r.icp>22), pbLo=cnt(r=>r.pbto2<20), prxHi=cnt(r=>r.prx>0.25), atOpt=cnt(r=>r.opt&&Math.abs(r.cpp-r.opt)<=5);
+  const alarm=Lg.find(r=>r.adr<-10);
+  const good=(ok)=>ok?COL.good:COL.bad;
+  const rows=[
+    ['ICP > 22',dur(icpHi),good(icpHi<30)],['PbtO₂ < 20',dur(pbLo),good(pbLo<30)],
+    ['PRx > 0.25',Math.round(prxHi/n*100)+'% of time',good(prxHi/n<0.3)],['CPP at CPPopt ±5',Math.round(atOpt/n*100)+'% of time',good(atOpt/n>0.5)],
+  ];
+  if(CAP.case==='sah')rows.push(['EEG alarm',alarm?hm(alarm.t):'—',COL.warn],['IA therapy',CAP.ia!=null?hm(CAP.ia):'—',good(CAP.ia!=null)]);
+  $('#dbGrid').innerHTML=rows.map(([k,v,c])=>`<div class="ro"><span class="k">${k}</span><span class="v" style="color:${c}">${v}</span></div>`).join('');
+  $('#dbTake').textContent=CASES[CAP.case].take;$('#dbCase').textContent=CASES[CAP.case].name;
+  $('#debrief6').hidden=false;txState();
+}
+function enter6(){CAP.saved=pick(S);if(CAP.caseS)Object.assign(S,CAP.caseS);if(!CAP.started)startCase(CAP.case);else{ui6();drawCT();drawMonitor();}}
+function leave6(){CAP.run=false;CAP.caseS=pick(S);Object.assign(S,CAP.saved);}
+
+/* ───────── loop ───────── */
+function drawStatic(){
+  if(active===1){drawSkull();drawPV();}
+  if(active===2){drawLassen();}
+  if(active===3){drawPRx();}
+  if(active===4){outputs4();}
+  if(active===5){drawTimeline();outputs5();}
+  if(active===6){drawCT();drawMonitor();txState();}
+}
+let acc=0, steps=0;
+const STEP=0.12;
+function frame(ts){
+  const t=ts/1000, dt=Math.min(0.05,t-(lastT||t)); lastT=t;
+  if(active===1)drawWave(t);
+  if(active===2)drawVessel(t,dt);
+  acc+=dt;
+  if(acc>=STEP){acc-=STEP;if(acc>STEP)acc=0;if(active!==6)simStep(5);steps++;
+    if(steps%4===0){prxReadout();if(active===3)drawU();}}
+  if(active===3)drawTrace(acc/STEP);
+  if(active===4)drawKrogh(t,dt);
+  if(active===6&&CAP.run){CAP.acc+=dt;const st=0.25/CAP.speed;let n=0;
+    while(CAP.acc>=st&&CAP.run){CAP.acc-=st;capStep();n++;}
+    if(n){drawMonitor();outputs();txState();}}
+  if(active===5){
+    if(V.play){V.day=Math.min(14,V.day+dt*0.8);if(V.day>=14){V.play=false;$('#play5').textContent='Play';}drawTimeline();outputs5();}
+    drawEEG(t);}
+  requestAnimationFrame(frame);
+}
+new ResizeObserver(()=>drawStatic()).observe(document.querySelector('main'));
+new ResizeObserver(()=>document.documentElement.style.setProperty('--hdr',$('.top').offsetHeight+'px')).observe($('.top'));
+
+readColors();
+simReset();simRun(1440);
+const h=+(location.hash.match(/ch(\d)/)||[])[1];
+sync(); go(h>=1&&h<=6?h:1);
+requestAnimationFrame(frame);
+document.fonts&&document.fonts.ready.then(()=>drawStatic());
+</script>
+</body>
+</html>
