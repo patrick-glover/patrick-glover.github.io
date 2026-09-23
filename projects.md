@@ -4,6 +4,7 @@ title: Projects
 permalink: /projects/
 ---
 <style>
+    .project-card:hover { box-shadow: none; transform: none; }
     .project-links { list-style: none; margin: -0.5rem 0 1rem; padding: 0; font-size: 0.9rem; }
     .project-links li { margin-bottom: 0.4rem; }
     .project-links a { color: var(--text); font-weight: 500; }
@@ -17,7 +18,7 @@ permalink: /projects/
         <div class="project-card">
             <h3>
                 <a href="{{ project.url }}">{{ project.name }}</a>
-                <span class="project-status status-{{ project.status }}">{{ project.status | capitalize }}</span>
+                {% if project.status %}<span class="project-status status-{{ project.status }}">{{ project.status | capitalize }}</span>{% endif %}
             </h3>
             <p>{{ project.description }}</p>
             {% if project.links %}
