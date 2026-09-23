@@ -9,8 +9,8 @@
     - name: "Breach"
       url: "/epilepsy/breach/"
       blurb: "Why the skull acts as a spatial low-pass filter on cortical signals."
-  tags: ["Neurology", "Interactive"]
+  tags: ["Neurology", "Interactive", "MedEd"]
 - name: "ICU neuromonitor sim"
   url: "/neuromonitor/"
   description: "Interactive primer for building intuition on cerebral autoregulation and how we monitor it."
-  tags: ["Neurology", "Interactive"]
+  tags: ["Neurology", "Interactive", "MedEd"]
