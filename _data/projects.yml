@@ -1,1 +1,13 @@
 # Add projects here - see WORKFLOW.md for format
+- name: "Epilepsy"
+  url: "/epilepsy/tdcs/"
+  description: "Interactive primers on the physics and physiology behind focal epilepsy and brain stimulation."
+  status: "active"
+  links:
+    - name: "tDCS"
+      url: "/epilepsy/tdcs/"
+      blurb: "One neuron, a patch of cortex, then a weak field that stops a seizure."
+    - name: "Breach"
+      url: "/epilepsy/breach/"
+      blurb: "Why the skull acts as a spatial low-pass filter on cortical signals."
+  tags: ["Neurology", "Interactive"]
