@@ -5,6 +5,7 @@ permalink: /projects/
 ---
 <style>
     .project-card:hover { box-shadow: none; transform: none; }
+    .project-card .tags { display: none; }
     .project-links { list-style: none; margin: -0.5rem 0 1rem; padding: 0; font-size: 0.9rem; }
     .project-links li { margin-bottom: 0.4rem; }
     .project-links a { color: var(--text); font-weight: 500; }

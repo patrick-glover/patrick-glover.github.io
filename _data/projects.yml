@@ -1,15 +1,14 @@
 # Add projects here - see WORKFLOW.md for format
-- name: "Epilepsy physiology demos"
+- name: "tDCS visualizer"
   url: "/epilepsy/tdcs/"
-  description: "Interactive primers on the physics and physiology behind focal epilepsy and brain stimulation."
-  links:
-    - name: "tDCS"
-      url: "/epilepsy/tdcs/"
-      blurb: "One neuron, a patch of cortex, then a weak field that stops a seizure."
-    - name: "Breach"
-      url: "/epilepsy/breach/"
-      blurb: "Why the skull acts as a spatial low-pass filter on cortical signals."
+  description: "One neuron, a patch of cortex, then a weak field that stops a seizure."
   tags: ["Neurology", "Interactive", "MedEd"]
+
+- name: "Breach rhythm EEG"
+  url: "/epilepsy/breach/"
+  description: "Why the skull acts as a spatial low-pass filter on cortical signals."
+  tags: ["Neurology", "Interactive", "MedEd"]
+
 - name: "ICU neuromonitor sim"
   url: "/neuromonitor/"
   description: "Interactive primer for building intuition on cerebral autoregulation and how we monitor it."
