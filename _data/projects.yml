@@ -1,4 +1,9 @@
 # Add projects here - see WORKFLOW.md for format
+- name: "Summation: an EMG primer"
+  url: "/emg/"
+  description: "Nerve conduction and EMG built up from individual motor units. Stimulate, lesion, and listen."
+  tags: ["Neurology", "Interactive", "MedEd"]
+
 - name: "tDCS visualizer"
   url: "/tdcs/"
   description: "One neuron, a patch of cortex, then a weak field that stops a seizure."
