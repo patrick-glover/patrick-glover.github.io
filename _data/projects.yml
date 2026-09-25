@@ -1,5 +1,5 @@
 # Add projects here - see WORKFLOW.md for format
-- name: "IIC Reference"
+- name: "IIC Composer"
   url: "/iic/"
   description: "Build a periodic or rhythmic EEG pattern, watch it on a schematic trace, and see where ACNS 2021 puts it."
   tags: ["Neurology", "Interactive", "MedEd"]
