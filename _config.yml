@@ -7,3 +7,7 @@ markdown: kramdown
 plugins:
   - jekyll-seo-tag
   - jekyll-feed
+
+# Cloudflare Web Analytics site token (dash.cloudflare.com → Analytics & Logs → Web Analytics).
+# Leave empty to disable. Also used by the project repos via /assets/analytics.js.
+cloudflare_analytics_token: "62ba838213d247afa3923098da62814d"
