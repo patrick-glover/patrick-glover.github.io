@@ -6,7 +6,7 @@
 (function () {
   if (location.hostname !== 'patrickglover.io') return;
   var s = document.createElement('script');
-  s.defer = true;
+  s.type = 'module';
   s.src = 'https://static.cloudflareinsights.com/beacon.min.js';
   s.setAttribute('data-cf-beacon', JSON.stringify({ token: '{{ site.cloudflare_analytics_token }}' }));
   document.head.appendChild(s);
