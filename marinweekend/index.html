@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cavallo Point Weekend</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Fog-white base, sea-glass blues, Marin-hill sage, a softened bridge orange. Layout: live illustrated sky up top, then glassy cards on a single phone column. */
+  --bg:#F2F6F7; --surface:#FFFFFF; --ink:#22323C; --muted:#6E7F89; --line:#E1E8EB;
+  --accent:#DD5639; --sea:#3E8EAF; --sun:#EFA43F; --dusk:#8A84C6; --sage:#7FA07E;
+  --display:"Fraunces", Georgia, serif;
+  --body:"DM Sans", system-ui, -apple-system, sans-serif;
+  --shadow:0 1px 2px rgba(34,50,60,.04), 0 6px 20px rgba(34,50,60,.06);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111A22; --surface:#18242E; --ink:#E8EEF1; --muted:#93A3AD; --line:#24333E;
+    --accent:#F0735A; --sea:#6BB2D2; --sun:#F4BA62; --dusk:#A7A2E0; --sage:#97B796;
+    --shadow:0 1px 2px rgba(0,0,0,.2), 0 8px 24px rgba(0,0,0,.25); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111A22; --surface:#18242E; --ink:#E8EEF1; --muted:#93A3AD; --line:#24333E;
+  --accent:#F0735A; --sea:#6BB2D2; --sun:#F4BA62; --dusk:#A7A2E0; --sage:#97B796;
+  --shadow:0 1px 2px rgba(0,0,0,.2), 0 8px 24px rgba(0,0,0,.25); color-scheme: dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:560px;margin:0 auto;padding:12px 16px 56px;display:flex;flex-direction:column;gap:16px}
+.hero{position:relative;border-radius:22px;overflow:hidden;box-shadow:var(--shadow);aspect-ratio:2/1.15;min-height:200px}
+.hero svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hero .title{position:absolute;left:18px;top:16px;right:110px;color:#fff;text-shadow:0 1px 12px rgba(20,30,60,.25)}
+.hero h1{font-family:var(--display);font-weight:300;font-size:30px;line-height:1.05;margin:0;text-wrap:balance;letter-spacing:-.01em}
+.hero h1 em{font-style:italic}
+.hero .sub{font-size:12.5px;opacity:.9;margin-top:4px;letter-spacing:.02em}
+.clock{position:absolute;right:14px;top:14px;background:rgba(255,255,255,.28);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:14px;padding:6px 11px;text-align:right;font-variant-numeric:tabular-nums;line-height:1.15}
+.clock b{display:block;font-weight:600;font-size:17px}
+.clock span{font-size:11px;opacity:.9}
+.tabs{display:flex;gap:4px;background:color-mix(in srgb,var(--ink) 6%,transparent);border-radius:14px;padding:4px}
+.tabs button{flex:1;border:0;background:transparent;color:var(--muted);font:500 14px var(--body);padding:9px 10px;border-radius:11px;cursor:pointer;transition:background .2s,color .2s}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.tabs button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--sea);outline-offset:2px}
+.now{background:var(--surface);border-radius:18px;padding:16px 18px;display:flex;flex-direction:column;gap:2px;box-shadow:var(--shadow)}
+.now .eyebrow{font-size:12px;color:var(--accent);font-weight:600;display:flex;align-items:center;gap:7px}
+.now .eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.now .big{font-family:var(--display);font-weight:400;font-size:26px;line-height:1.15;letter-spacing:-.01em}
+.now .sub{color:var(--muted);font-size:14px}
+.card{background:var(--surface);border-radius:18px;padding:12px 12px 8px;box-shadow:var(--shadow)}
+.ribbon svg{width:100%;height:auto;display:block}
+.ribbon text{font-family:var(--body);font-size:8.5px;fill:var(--muted);letter-spacing:.02em}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.fact{background:var(--surface);border-radius:16px;padding:12px 13px;box-shadow:var(--shadow)}
+.fact span{display:block;font-size:12px;color:var(--muted)}
+.fact b{display:block;font-family:var(--display);font-weight:400;font-size:22px;font-variant-numeric:tabular-nums;line-height:1.2;margin-top:2px}
+.fact small{display:block;color:var(--muted);font-size:12px}
+.fact.sun b{color:color-mix(in srgb,var(--sun) 75%,var(--ink))}
+.fact.sea b{color:var(--sea)}
+h2{font-family:var(--display);font-weight:300;font-size:26px;margin:10px 0 0;letter-spacing:-.01em}
+ol.plan{list-style:none;margin:0;padding:0 0 0 2px;display:flex;flex-direction:column;position:relative}
+ol.plan::before{content:"";position:absolute;left:78px;top:18px;bottom:18px;width:1.5px;background:var(--line)}
+ol.plan li{display:grid;grid-template-columns:66px 1fr;gap:24px;padding:11px 0;position:relative}
+ol.plan li::after{content:"";position:absolute;left:72px;top:17px;width:11px;height:11px;border-radius:50%;background:var(--bg);border:2px solid var(--sage)}
+ol.plan li.k-drive::after{border-color:var(--muted)}
+ol.plan li.k-hard::after{border-color:var(--accent);background:var(--accent)}
+ol.plan li.k-sky::after{border-color:var(--sun);background:var(--sun)}
+ol.plan li.live::after{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 20%,transparent)}
+.t{font-variant-numeric:tabular-nums;font-weight:600;font-size:13.5px;padding-top:2px;text-align:right}
+.t small{display:block;color:var(--muted);font-weight:400;font-size:12px}
+.what b{font-weight:600;font-size:15.5px}
+.what p{margin:2px 0 0;color:var(--muted);font-size:14px;max-width:62ch}
+.chip{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px;margin-left:6px;vertical-align:1px}
+.chip.drive{background:color-mix(in srgb,var(--muted) 14%,transparent);color:var(--muted)}
+.chip.hard{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}
+.chip.sky{background:color-mix(in srgb,var(--sun) 20%,transparent);color:color-mix(in srgb,var(--sun) 65%,var(--ink))}
+li.past{opacity:.42}
+.set{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:14px;color:var(--muted);background:var(--surface);border-radius:14px;padding:10px 14px;box-shadow:var(--shadow)}
+.set label{color:var(--ink);font-weight:500}
+.set input{font:600 15px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:5px 8px}
+ul.notes{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;font-size:14px}
+ul.notes li{background:var(--surface);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow);color:color-mix(in srgb,var(--ink) 85%,var(--muted))}
+.foot{font-size:12px;color:var(--muted);text-align:center}
+.foot a{color:var(--muted)}
+[hidden]{display:none!important}
+@media (max-width:380px){ .facts{grid-template-columns:1fr 1fr} .hero h1{font-size:26px} }
+@media (prefers-reduced-motion:no-preference){
+  .pulse{animation:p 2.4s ease-in-out infinite} @keyframes p{50%{opacity:.45}}
+  .fog{animation:drift 38s ease-in-out infinite alternate} .fog2{animation:drift 52s ease-in-out infinite alternate-reverse}
+  @keyframes drift{from{transform:translateX(-18px)}to{transform:translateX(18px)}}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <svg id="scene" viewBox="0 0 400 230" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
+    <div class="title"><h1>Cavallo Point <em>weekend</em></h1><div class="sub">Stinson · Hawk Hill · Muir Woods</div></div>
+    <div class="clock"><b id="clk">--:--</b><span id="clkday">Sausalito</span></div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tab-saturday" aria-selected="true" data-day="0">Sat · Nov 7</button>
+    <button role="tab" id="tab-sunday" aria-selected="false" data-day="1">Sun · Nov 8</button>
+  </div>
+
+  <section class="now" aria-live="polite">
+    <span class="eyebrow" id="nowEyebrow">Right now</span>
+    <span class="big" id="nowBig">…</span>
+    <span class="sub" id="nowSub"></span>
+  </section>
+
+  <div class="card ribbon"><svg id="ribbon" viewBox="0 0 360 214" role="img" aria-label="Sun elevation, tide and plan on one time axis"></svg></div>
+
+  <div class="facts" id="facts"></div>
+
+  <div class="set" id="setters"></div>
+
+  <h2 id="planTitle">The day</h2>
+  <ol class="plan" id="plan"></ol>
+
+  <h2>Worth knowing</h2>
+  <ul class="notes" id="notes"></ul>
+
+  <p class="foot" id="foot"></p>
+</div>
+
+<script>
+(function(){
+  const LAT = 37.8257, LON = -122.4993;           // Hawk Hill
+  const BASE = Date.UTC(2026,10,7);               // Sat Nov 7 2026, PST = UTC-8 all weekend
+  const OFF = 480;
+  const rad = d => d*Math.PI/180, deg = r => r*180/Math.PI;
+
+  // NOAA solar position
+  function sunAt(ms){
+    const jd = ms/86400000 + 2440587.5, T = (jd-2451545)/36525;
+    const L0 = ((280.46646 + T*(36000.76983 + T*0.0003032))%360+360)%360;
+    const M = 357.52911 + T*(35999.05029 - 0.0001537*T);
+    const e = 0.016708634 - T*(0.000042037 + 0.0000001267*T);
+    const C = Math.sin(rad(M))*(1.914602 - T*(0.004817+0.000014*T)) + Math.sin(rad(2*M))*(0.019993-0.000101*T) + Math.sin(rad(3*M))*0.000289;
+    const om = 125.04 - 1934.136*T;
+    const lam = L0 + C - 0.00569 - 0.00478*Math.sin(rad(om));
+    const eps = 23 + (26 + (21.448 - T*(46.815 + T*(0.00059 - T*0.001813)))/60)/60 + 0.00256*Math.cos(rad(om));
+    const dec = Math.asin(Math.sin(rad(eps))*Math.sin(rad(lam)));
+    const y = Math.tan(rad(eps/2))**2;
+    const eot = 4*deg(y*Math.sin(2*rad(L0)) - 2*e*Math.sin(rad(M)) + 4*e*y*Math.sin(rad(M))*Math.cos(2*rad(L0)) - 0.5*y*y*Math.sin(4*rad(L0)) - 1.25*e*e*Math.sin(2*rad(M)));
+    const utcMin = ((ms % 86400000)+86400000)%86400000/60000;
+    const ha = rad((utcMin + eot + 4*LON)/4 - 180);
+    const la = rad(LAT);
+    const zen = Math.acos(Math.sin(la)*Math.sin(dec) + Math.cos(la)*Math.cos(dec)*Math.cos(ha));
+    const az = (deg(Math.atan2(Math.sin(ha), Math.cos(ha)*Math.sin(la) - Math.tan(dec)*Math.cos(la))) + 180) % 360;
+    return {el: 90 - deg(zen), az};
+  }
+  const msFor = (day, min) => BASE + day*86400000 + (min+OFF)*60000;
+  const elev = (day,min) => sunAt(msFor(day,min)).el;
+
+  function sunEvents(day){
+    const ev = {}; let prev = elev(day,300), peak = {el:-90,min:0};
+    for(let m=301;m<=1260;m++){
+      const cur = elev(day,m);
+      if(cur>peak.el) peak={el:cur,min:m};
+      if(prev< -0.833 && cur>=-0.833) ev.rise=m;
+      if(prev>=6 && cur<6) ev.golden=m;
+      if(prev>=-0.833 && cur< -0.833) ev.set=m;
+      if(prev>=-6 && cur< -6) ev.dusk=m;
+      prev=cur;
+    }
+    ev.peak=peak; ev.setAz = sunAt(msFor(day,ev.set)).az;
+    return ev;
+  }
+  const SUN = [sunEvents(0), sunEvents(1)];
+
+  // Tide: blended from published Bolinas Lagoon predictions for Sat Nov 7 (ft, MLLW). Cosine between turning points.
+  const TIDE = [[200,2.0],[580,6.2],[1000,0.2],[1370,4.6]];
+  function tideAt(min){
+    for(let i=0;i<TIDE.length-1;i++){
+      const [a,ha]=TIDE[i],[b,hb]=TIDE[i+1];
+      if(min>=a && min<=b){ const f=(1-Math.cos(Math.PI*(min-a)/(b-a)))/2; return ha+(hb-ha)*f; }
+    }
+    return null;
+  }
+
+  // Formatting
+  const fmt = m => { m=Math.round(m); let h=Math.floor(m/60)%24, mm=m%60; const ap=h>=12?'PM':'AM'; h=h%12||12; return h+':'+String(mm).padStart(2,'0')+' '+ap; };
+  const fmtS = m => fmt(m).replace(' AM','a').replace(' PM','p');
+  const dur = d => { d=Math.max(0,Math.round(d)); const h=Math.floor(d/60), m=d%60; return h? h+' h '+m+' m' : m+' min'; };
+  const toMin = s => { const [h,m]=s.split(':').map(Number); return h*60+m; };
+  const floor5 = m => Math.floor(m/5)*5;
+
+  // Settings (per-viewer convenience only)
+  const store = {
+    get(k,d){ try{ return localStorage.getItem(k) ?? d; }catch(e){ return d; } },
+    set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  };
+  let dinner = toMin(store.get('cp_dinner','18:30'));
+  let passT  = toMin(store.get('cp_pass','10:00'));
+
+  function satPlan(){
+    const s = SUN[0];
+    const hawkLeave = floor5(s.golden - 20);
+    const dinnerLeave = dinner - 20;
+    const tArr = tideAt(640), tLeave = tideAt(735);
+    return [
+      {s:600,e:640,k:'drive',title:'Drive to Stinson',body:'About 40 min on Hwy 1 over the shoulder of Mt. Tam. Lots of switchbacks; put anyone who gets carsick up front. On a sunny Saturday the beach lots fill by late morning.'},
+      {s:640,e:690,title:'Stinson beach walk',body:`High tide was around 9:40. You arrive on a falling tide, roughly ${tArr.toFixed(1)} ft, dropping to ${tLeave.toFixed(1)} ft by the time you leave, so the beach widens as you walk. Stay above the wet line; this beach gets sneaker waves.`},
+      {s:690,e:735,title:'Lunch in town',body:'Parkside Cafe is the classic, a block off the sand. If the sit-down wait is long, its beach-side window is faster. Order by about noon to make the hard stop.'},
+      {s:735,e:775,k:'hard',title:'Leave Stinson',body:'40 min back plus a few minutes of buffer for beach traffic on the way out puts you at Cavallo around 12:55.'},
+      {s:780,e:900,title:'Watercolor class',body:'1:00 to 3:00.'},
+      {s:900,e:hawkLeave,title:'Downtime',body:'Rest your legs. Grab jackets for later: Hawk Hill is exposed and the wind picks up as the sun drops.'},
+      {s:hawkLeave,e:hawkLeave+15,k:'drive',title:'Head up to Hawk Hill',body:'10 to 15 min from Cavallo via Alexander Ave and Conzelman Rd. The lot at the top is small and sunset is exactly when it fills, so earlier beats later.'},
+      {s:s.golden,e:s.set,k:'sky',title:'Golden hour',body:`Sun drops below 6° at ${fmt(s.golden)}. It sets over the Pacific toward the WSW (azimuth ${Math.round(s.setAz)}°), so the bridge and city to your east catch the warm light side-on.`},
+      {s:s.set,e:s.dusk,k:'sky',title:'Sunset, then turn around',body:`Sunset ${fmt(s.set)}. Don't leave right away: for the next ${s.dusk-s.set} min (civil dusk at ${fmt(s.dusk)}) the city picks up the afterglow and the bridge lights come on.`},
+      {s:dinnerLeave,e:dinner,k:'drive',title:'Down to Sausalito',body:'About 15 to 20 min including parking. Go back down Conzelman the way you came; past the summit it turns one-way toward Point Bonita.'},
+      {s:dinner,e:dinner+120,title:'Dinner with your uncle and cousins',body:'Set the reservation time above and every leave-by time on this page adjusts.'}
+    ];
+  }
+  function sunPlan(){
+    const s=SUN[1];
+    return [
+      {s:passT-30,e:passT-5,k:'drive',title:'Drive to Muir Woods',body:'About 25 min from Cavallo. There is no cell service in the canyon: open the parking pass now and screenshot it.'},
+      {s:passT,e:passT+90,title:'Muir Woods',body:'Main Trail up to Bridge 4 and back down the other bank is about 2 flat miles, 1 to 1.5 hours, fine for every age. For something quieter, go up the Ben Johnson Trail and come back on Hillside.'},
+      {s:passT+90,e:passT+150,title:'Optional: Muir Beach Overlook',body:'About 10 min further down Hwy 1 if anyone wants one more look at the ocean before everyone heads home.'},
+      {s:s.set,e:s.dusk,k:'sky',title:'Sunset',body:`${fmt(s.set)} on Sunday. Nothing is planned, so it's open if you want a second try at a spot.`}
+    ];
+  }
+
+  // Ribbon: sun arc + tide + plan bars on one time axis
+  const X0=390, X1=1170, L=26, R=350;
+  const xOf = m => L + (m-X0)/(X1-X0)*(R-L);
+  function ribbon(day, plan, nowMin){
+    const s = SUN[day];
+    const elY = e => 96 - (e+10)/50*84;     // -10..40 deg -> 96..12
+    const tdY = h => 168 - h/7*42;          // 0..7 ft -> 168..126
+    let g = '';
+    // golden + dusk bands
+    g += `<rect x="${xOf(s.golden)}" y="10" width="${xOf(s.set)-xOf(s.golden)}" height="88" fill="var(--sun)" opacity=".16"/>`;
+    g += `<rect x="${xOf(s.set)}" y="10" width="${xOf(s.dusk)-xOf(s.set)}" height="88" fill="var(--dusk)" opacity=".18"/>`;
+    // grid hours
+    for(let h=7;h<=19;h++){ const x=xOf(h*60); g+=`<line x1="${x}" x2="${x}" y1="10" y2="196" stroke="var(--line)" stroke-width=".6"/>`; if(h%2===1) g+=`<text x="${x}" y="210" text-anchor="middle">${h>12?h-12:h}${h>=12?'p':'a'}</text>`; }
+    // horizon
+    g += `<line x1="${L}" x2="${R}" y1="${elY(0)}" y2="${elY(0)}" stroke="var(--muted)" stroke-width=".8" stroke-dasharray="2 2"/>`;
+    g += `<text x="${L-3}" y="${elY(0)+3}" text-anchor="end">0°</text><text x="${L-3}" y="${elY(30)+3}" text-anchor="end">30°</text>`;
+    // sun arc
+    let p='', a='';
+    let lastX=L;
+    for(let m=X0;m<=X1;m+=5){ const e=elev(day,m); if(e<-9 && m>720) break; const y=elY(Math.max(-10,e)); p+=(p?'L':'M')+xOf(m).toFixed(1)+' '+y.toFixed(1); lastX=xOf(m); }
+    a = p + `L${lastX} ${elY(0)}L${L} ${elY(0)}Z`;
+    g += `<clipPath id="above"><rect x="0" y="0" width="360" height="${elY(0)}"/></clipPath>`;
+    g += `<path d="${a}" fill="var(--sun)" opacity=".12" clip-path="url(#above)"/>`;
+    g += `<path d="${p}" fill="none" stroke="var(--sun)" stroke-width="2"/>`;
+    g += `<text x="${xOf(s.set)}" y="${elY(0)+11}" text-anchor="middle" fill="var(--ink)" style="fill:var(--ink);font-weight:600">${fmtS(s.set)}</text>`;
+    g += `<text x="${xOf(s.peak.min)}" y="${elY(s.peak.el)-5}" text-anchor="middle">${s.peak.el.toFixed(0)}° high</text>`;
+    g += `<text x="${L}" y="8">SUN</text>`;
+    // tide lane
+    if(day===0){
+      let tp='';
+      for(let m=X0;m<=X1;m+=5){ const h=tideAt(m); tp+=(m===X0?'M':'L')+xOf(m).toFixed(1)+' '+tdY(h).toFixed(1); }
+      g += `<path d="${tp}L${R} 168L${L} 168Z" fill="var(--sea)" opacity=".14"/><path d="${tp}" fill="none" stroke="var(--sea)" stroke-width="1.6"/>`;
+      g += `<text x="${L}" y="120">TIDE · STINSON</text>`;
+      g += `<text x="${xOf(580)+6}" y="${tdY(6.2)-4}">high ~9:40a</text>`;
+      g += `<text x="${xOf(1000)}" y="${tdY(0.2)-4}" text-anchor="middle">low ~4:40p</text>`;
+    } else {
+      g += `<text x="${L}" y="120">MUIR WOODS · canyon floor loses direct sun early</text>`;
+      g += `<rect x="${xOf(passT)}" y="128" width="${xOf(passT+90)-xOf(passT)}" height="38" rx="4" fill="var(--sea)" opacity=".14"/>`;
+    }
+    // plan bars
+    g += `<text x="${L}" y="178">PLAN</text>`;
+    plan.forEach(it=>{
+      if(it.k==='sky') return;
+      const x=xOf(Math.max(X0,it.s)), w=Math.max(2,xOf(Math.min(X1,it.e))-x);
+      const fill = it.k==='drive'?'var(--muted)':it.k==='hard'?'var(--accent)':'var(--sage)';
+      g += `<rect x="${x+.5}" y="183" width="${Math.max(1.5,w-1)}" height="8" rx="4" fill="${fill}" opacity="${it.k==='drive'?.3:.85}"/>`;
+    });
+    // now line
+    if(nowMin!==null && nowMin>=X0 && nowMin<=X1){
+      const x=xOf(nowMin), e=elev(day,nowMin);
+      g += `<line x1="${x}" x2="${x}" y1="10" y2="196" stroke="var(--accent)" stroke-width="1.4"/>`;
+      if(e>-10) g += `<circle cx="${x}" cy="${elY(e)}" r="4.5" fill="var(--sun)" stroke="var(--surface)" stroke-width="1.5"/>`;
+      if(day===0){ const h=tideAt(nowMin); g+=`<circle cx="${x}" cy="${tdY(h)}" r="3.5" fill="var(--sea)" stroke="var(--surface)" stroke-width="1.5"/>`; }
+      g += `<text x="${Math.min(x+3,R-20)}" y="18" style="fill:var(--accent);font-weight:700">now</text>`;
+    }
+    document.getElementById('ribbon').innerHTML = g;
+  }
+
+
+  // Hero scene: sky follows the real sun
+  const mix=(a,b,t)=>{const p=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));const A=p(a),B=p(b);return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join('');};
+  const SKY=[ // elevation, top, horizon
+    [-12,'#1D2747','#3E4672'],[-6,'#3A4580','#C98A8E'],[-1,'#5F79B6','#F2A07E'],[4,'#7FA3D2','#F7C38C'],[10,'#86B7DE','#F3E0BE'],[20,'#79B4DE','#DDEEF6'],[40,'#6AAAD9','#D6ECF7']];
+  function skyFor(el){
+    if(el<=SKY[0][0]) return [SKY[0][1],SKY[0][2]];
+    for(let i=0;i<SKY.length-1;i++){const [e0,t0,h0]=SKY[i],[e1,t1,h1]=SKY[i+1]; if(el<=e1){const t=(el-e0)/(e1-e0); return [mix(t0,t1,t),mix(h0,h1,t)];}}
+    return [SKY.at(-1)[1],SKY.at(-1)[2]];
+  }
+  function scene(day, nowMin){
+    const s=SUN[day];
+    const m = nowMin!==null ? nowMin : s.golden+10;
+    const el = elev(day,m);
+    const [top,hor]=skyFor(el);
+    const night = Math.max(0,Math.min(1,(-el-1)/8));
+    const hillA=mix('#9DB8A4','#3B4A63',night), hillB=mix('#7E9E86','#2E3B52',night), hillC=mix('#5F8268','#222D40',night);
+    const water=mix('#7FB0CC','#2F3D63',night), water2=mix('#A9CEDF','#4A4F7A',night);
+    const bridge = mix('#D8513A','#A5413A',night*.6);
+    // sun disc: x across by time of day, y by elevation
+    const sx = 30 + (m - s.rise)/(s.set - s.rise)*340, sy = 150 - el*3.2;
+    const D=150; // deck height
+    const T1=118, T2=292, TT=58; // tower x, tower top
+    const qy=(x0,y0,cx,cy,x1,y1,x)=>{const t=(x-x0)/(x1-x0);return (1-t)*(1-t)*y0+2*(1-t)*t*cy+t*t*y1;};
+    let susp='';
+    for(let x=T1+8;x<T2;x+=8){ const y=qy(T1,TT+4,205,186,T2,TT+4,x); susp+=`M${x} ${y.toFixed(1)}V${D}`; }
+    for(let x=T2+8;x<400;x+=8){ const y=qy(T2,TT+4,350,140,420,118,x); if(y<D) susp+=`M${x} ${y.toFixed(1)}V${D}`; }
+    for(let x=T1-8;x>0;x-=8){ const y=qy(-20,124,60,140,T1,TT+4,x); if(y<D) susp+=`M${x} ${y.toFixed(1)}V${D}`; }
+    const tower = x => `<g fill="${bridge}"><rect x="${x-6}" y="${TT}" width="3.4" height="${D-TT+28}"/><rect x="${x+2.6}" y="${TT}" width="3.4" height="${D-TT+28}"/>${[TT+2,TT+22,TT+42,TT+64].map(y=>`<rect x="${x-6}" y="${y}" width="12" height="3"/>`).join('')}<rect x="${x-7}" y="${D+18}" width="14" height="12"/></g>`;
+    const stars = night>.4 ? Array.from({length:22},(_,i)=>`<circle cx="${(i*73)%400}" cy="${(i*37)%90+6}" r="${i%3?0.6:1}" fill="#fff" opacity="${(night-.4)*1.4}"/>`).join('') : '';
+    document.getElementById('scene').innerHTML = `
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${top}"/><stop offset=".72" stop-color="${hor}"/></linearGradient>
+        <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${water2}"/><stop offset="1" stop-color="${water}"/></linearGradient>
+        <radialGradient id="glow"><stop offset="0" stop-color="#FFF4D6" stop-opacity=".9"/><stop offset="1" stop-color="#FFE3A8" stop-opacity="0"/></radialGradient>
+        <filter id="blur"><feGaussianBlur stdDeviation="6"/></filter>
+      </defs>
+      <rect width="400" height="230" fill="url(#sky)"/>
+      ${stars}
+      ${el>-4?`<circle cx="${sx}" cy="${sy}" r="38" fill="url(#glow)"/><circle cx="${sx}" cy="${sy}" r="9" fill="#FFF3D4"/>`:''}
+      <path d="M200 156 C240 128 268 132 300 140 C330 126 368 118 400 128 V170 H200Z" fill="${hillA}" opacity=".75"/>
+      <rect y="150" width="400" height="80" fill="url(#sea)"/>
+      <g class="fog" opacity="${.55-night*.25}" filter="url(#blur)"><ellipse cx="300" cy="148" rx="120" ry="10" fill="#fff"/><ellipse cx="90" cy="152" rx="90" ry="7" fill="#fff"/></g>
+      <path d="M-20 124 Q60 140 ${T1} ${TT+4} Q205 186 ${T2} ${TT+4} Q350 140 420 118" fill="none" stroke="${bridge}" stroke-width="2"/>
+      <path d="${susp}" stroke="${bridge}" stroke-width=".6" opacity=".8"/>
+      ${tower(T1)}${tower(T2)}
+      <rect x="-10" y="${D}" width="420" height="5" fill="${bridge}"/>
+      <rect x="-10" y="${D+5}" width="420" height="2" fill="${mix(bridge,'#000000',.35)}"/>
+      ${night>.5?Array.from({length:26},(_,i)=>`<circle cx="${8+i*15.5}" cy="${D-1.5}" r=".9" fill="#FFE7A8"/>`).join(''):''}
+      <path d="M-10 230 V172 C30 150 70 146 108 160 C140 172 160 196 190 230 Z" fill="${hillB}"/>
+      <path d="M-10 230 V196 C40 180 90 186 130 230 Z" fill="${hillC}"/>
+      <g class="fog2" opacity="${.35-night*.15}" filter="url(#blur)"><ellipse cx="60" cy="182" rx="80" ry="9" fill="#fff"/></g>
+      <path d="M318 230 C340 205 372 196 410 200 V230Z" fill="${hillC}" opacity=".9"/>`;
+  }
+
+  function laNow(){ const ms=Date.now(); const local=ms-OFF*60000; const dayIdx=Math.floor((local-BASE)/86400000); const min=((local%86400000)+86400000)%86400000/60000; return {dayIdx,min,ms}; }
+
+  let day = location.hash==='#sunday' ? 1 : (location.hash==='#saturday' ? 0 : null);
+  if(day===null){ const n=laNow(); day = n.dayIdx===1 ? 1 : 0; }
+
+  function render(){
+    const n = laNow();
+    const onDay = n.dayIdx===day;
+    const nowMin = onDay ? n.min : null;
+    const plan = day===0 ? satPlan() : sunPlan();
+    const s = SUN[day];
+
+    document.getElementById('clk').textContent = fmt(n.min);
+    document.getElementById('clkday').textContent = n.dayIdx===0?'Saturday':n.dayIdx===1?'Sunday':'Sausalito';
+    document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected', String(+b.dataset.day===day)));
+
+    // Now card
+    const E=document.getElementById('nowEyebrow'), B=document.getElementById('nowBig'), S=document.getElementById('nowSub');
+    if(!onDay){
+      E.textContent = n.dayIdx<day ? 'Coming up' : 'Preview';
+      const first = plan[0];
+      B.textContent = `${first.title} at ${fmt(first.s)}`;
+      S.textContent = `Sunset ${fmt(s.set)} · golden hour from ${fmt(s.golden)}`;
+    } else {
+      const live = plan.filter(it=>it.k!=='sky').find(it=>nowMin>=it.s && nowMin<it.e);
+      const nextLeave = plan.find(it=>(it.k==='drive'||it.k==='hard') && it.s>nowMin);
+      const toSet = s.set - nowMin;
+      if(nextLeave){
+        E.textContent = live ? `Now: ${live.title}` : 'Next';
+        B.innerHTML = `${nextLeave.title} in <span class="pulse">${dur(nextLeave.s-nowMin)}</span>`;
+        S.textContent = `Leave by ${fmt(nextLeave.s)}` + (toSet>0 ? ` · sunset in ${dur(toSet)}` : '');
+      } else if(live){
+        E.textContent='Right now'; B.textContent=live.title;
+        S.textContent = toSet>0 ? `Sunset in ${dur(toSet)}` : 'Enjoy it';
+      } else {
+        E.textContent='Right now'; B.textContent = toSet>0 ? `Sunset in ${dur(toSet)}` : 'Nothing scheduled';
+        S.textContent = '';
+      }
+    }
+
+    ribbon(day, plan, nowMin);
+    scene(day, nowMin);
+
+    // Facts
+    const f = day===0
+      ? [['Sunset',fmtS(s.set),`golden ${fmtS(s.golden)}`],['Weather','67° / 52°','sunny, 10% rain'],['Stinson tide', nowMin!==null && tideAt(nowMin)!==null ? tideAt(nowMin).toFixed(1)+' ft' : '6.2 ft', nowMin!==null? (nowMin<580?'rising':nowMin<1000?'falling':'rising') : 'high ~9:40a']]
+      : [['Sunset',fmtS(s.set),`golden ${fmtS(s.golden)}`],['Weather','67° / 54°','sunny, 15% rain'],['Muir Woods','opens 8a','no cell service']];
+    const fc=['sun','','sea'];
+    document.getElementById('facts').innerHTML = f.map(([a,b,c],i)=>`<div class="fact ${fc[i]}"><span>${a}</span><b>${b}</b><small>${c}</small></div>`).join('');
+
+    // Setters
+    const st = document.getElementById('setters');
+    if(day===0){
+      st.innerHTML = `<label for="dinnerTime">Dinner reservation</label><input id="dinnerTime" type="time" step="300" value="${String(Math.floor(dinner/60)).padStart(2,'0')}:${String(dinner%60).padStart(2,'0')}"><span>sets the leave-by time</span>`;
+      document.getElementById('dinnerTime').onchange = e=>{ if(!e.target.value) return; dinner=toMin(e.target.value); store.set('cp_dinner',e.target.value); render(); };
+    } else {
+      st.innerHTML = `<label for="passTime">Parking pass arrival window</label><input id="passTime" type="time" step="900" value="${String(Math.floor(passT/60)).padStart(2,'0')}:${String(passT%60).padStart(2,'0')}">`;
+      document.getElementById('passTime').onchange = e=>{ if(!e.target.value) return; passT=toMin(e.target.value); store.set('cp_pass',e.target.value); render(); };
+    }
+
+    // Plan list
+    document.getElementById('planTitle').textContent = day===0 ? 'Saturday' : 'Sunday';
+    const chip = k => k==='drive'?'<span class="chip drive">leave</span>':k==='hard'?'<span class="chip hard">hard stop</span>':k==='sky'?'<span class="chip sky">sky</span>':'';
+    document.getElementById('plan').innerHTML = plan.slice().sort((a,b)=>a.s-b.s).map(it=>{
+      const cls = nowMin===null ? '' : (nowMin>=it.e ? 'past' : (nowMin>=it.s ? 'live' : ''));
+      return `<li class="${cls} k-${it.k||'do'}"><div class="t">${fmt(it.s)}${it.e-it.s>=30&&it.k!=='drive'?`<small>to ${fmt(it.e)}</small>`:''}</div><div class="what"><b>${it.title}</b>${chip(it.k)}<p>${it.body}</p></div></li>`;
+    }).join('');
+
+    // Notes
+    const notes = day===0 ? [
+      'Battery Spencer is the alternative: lower on Conzelman, right beside the north tower, with a tight frame on the bridge. Hawk Hill gives the wide view with the city behind it. The Spencer lot is tiny, so pick one and commit.',
+      `Moon is a thin waning crescent and won't rise until the early hours, so the sky goes properly dark after ${fmt(s.dusk)}.`,
+      'If fog comes over the headlands late afternoon, the bridge towers poking out of it can look better than a clear sunset. Check the view from Cavallo before you drive up.',
+      'Sun times on this page are calculated live from Hawk Hill\'s coordinates. Tide times are approximate (blended Bolinas Lagoon predictions; published tables disagree by up to ~30 min on the afternoon low).'
+    ] : [
+      'The park entrance fee is charged per adult (16+) and is separate from the parking pass. An America the Beautiful pass covers it.',
+      'The canyon floor is shaded and runs noticeably cooler than Sausalito. Bring a layer even though the forecast is 67°.',
+      'Mornings are quietest. If your pass window is flexible, earlier beats midday.',
+      'Coho salmon spawn in Redwood Creek from late November through January, a day or three after a good rain. With a dry forecast, don\'t expect them this weekend.'
+    ];
+    document.getElementById('notes').innerHTML = notes.map(t=>`<li>${t}</li>`).join('');
+
+    document.getElementById('foot').innerHTML = 'Forecast as of Sat 9:30 AM. Drive times are typical weekend estimates. <a href="https://www.nps.gov/muwo/planyourvisit/hours.htm">Muir Woods hours (NPS)</a>';
+  }
+
+  document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{ day=+b.dataset.day; location.hash = day? 'sunday':'saturday'; render(); }));
+  window.addEventListener('hashchange',()=>{ if(location.hash==='#sunday') day=1; else if(location.hash==='#saturday') day=0; render(); });
+  render();
+  setInterval(render, 30000);
+})();
+</script>
+</body>
+</html>
