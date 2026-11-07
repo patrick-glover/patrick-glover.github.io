@@ -387,8 +387,8 @@ ul.notes li{background:var(--surface);border-radius:14px;padding:12px 14px;box-s
 
     // Facts
     const f = day===0
-      ? [['Sunset',fmtS(s.set),`golden ${fmtS(s.golden)}`],['Weather','67° / 52°','sunny, 10% rain'],['Stinson tide', nowMin!==null && tideAt(nowMin)!==null ? tideAt(nowMin).toFixed(1)+' ft' : '6.2 ft', nowMin!==null? (nowMin<580?'rising':nowMin<1000?'falling':'rising') : 'high ~9:40a']]
-      : [['Sunset',fmtS(s.set),`golden ${fmtS(s.golden)}`],['Weather','67° / 54°','sunny, 15% rain'],['Muir Woods','opens 8a','no cell service']];
+      ? [['Sunset',fmtS(s.set),`golden ${fmtS(s.golden)}`],['High','67°F','low 52°F · sunny'],['Stinson tide', nowMin!==null && tideAt(nowMin)!==null ? tideAt(nowMin).toFixed(1)+' ft' : '6.2 ft', nowMin!==null? (nowMin<580?'rising':nowMin<1000?'falling':'rising') : 'high ~9:40a']]
+      : [['Sunset',fmtS(s.set),`golden ${fmtS(s.golden)}`],['High','67°F','low 54°F · sunny'],['Muir Woods','opens 8a','no cell service']];
     const fc=['sun','','sea'];
     document.getElementById('facts').innerHTML = f.map(([a,b,c],i)=>`<div class="fact ${fc[i]}"><span>${a}</span><b>${b}</b><small>${c}</small></div>`).join('');
 
@@ -418,7 +418,7 @@ ul.notes li{background:var(--surface);border-radius:14px;padding:12px 14px;box-s
       'Sun times on this page are calculated live from Hawk Hill\'s coordinates. Tide times are approximate (blended Bolinas Lagoon predictions; published tables disagree by up to ~30 min on the afternoon low).'
     ] : [
       'The park entrance fee is charged per adult (16+) and is separate from the parking pass. An America the Beautiful pass covers it.',
-      'The canyon floor is shaded and runs noticeably cooler than Sausalito. Bring a layer even though the forecast is 67°.',
+      'The canyon floor is shaded and runs noticeably cooler than Sausalito. Bring a layer even though the forecast high is 67°F.',
       'Mornings are quietest. If your pass window is flexible, earlier beats midday.',
       'Coho salmon spawn in Redwood Creek from late November through January, a day or three after a good rain. With a dry forecast, don\'t expect them this weekend.'
     ];
